@@ -1,0 +1,3171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+        <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+        <!ENTITY RFC3986 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3986.xml">
+        <!ENTITY RFC6596 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6596.xml">
+        <!ENTITY RFC6839 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6839.xml">
+        <!ENTITY RFC6901 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6901.xml">
+        <!ENTITY RFC7049 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7049.xml">
+        <!ENTITY RFC8259 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8259.xml">
+        <!ENTITY RFC7231 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7231.xml">
+        <!ENTITY RFC8288 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8288.xml">
+        <!ENTITY ldp SYSTEM "https://xml2rfc.tools.ietf.org/public/rfc/bibxml4/reference.W3C.REC-ldp-20150226.xml">
+        <!ENTITY fragid-best-practices SYSTEM "https://xml2rfc.tools.ietf.org/public/rfc/bibxml4/reference.W3C.WD-fragid-best-practices-20121025.xml">
+        ]>
+<?rfc toc="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<?rfc strict="no"?>
+<?rfc rfcedstyle="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes" ?>
+<rfc category="info" docName="draft-handrews-json-schema-02" ipr="trust200902">
+    <front>
+        <title abbrev="JSON Schema">JSON Schema: A Media Type for Describing JSON Documents</title>
+
+        <author fullname="Austin Wright" initials="A" surname="Wright" role="editor">
+            <address>
+                <email>aaa@bzfx.net</email>
+            </address>
+        </author>
+
+        <author fullname="Henry Andrews" initials="H" surname="Andrews" role="editor">
+            <address>
+                <email>andrews_henry@yahoo.com</email>
+            </address>
+        </author>
+
+        <author fullname="Ben Hutton" initials="B" surname="Hutton" role="editor">
+            <organization>Wellcome Sanger Institute</organization>
+            <address>
+                <email>bh7@sanger.ac.uk</email>
+                <uri>https://jsonschema.dev</uri>
+            </address>
+        </author>
+
+        <author fullname="Greg Dennis" initials="G" surname="Dennis">
+            <address>
+                <postal>
+                    <street></street>
+                    <city>Auckland</city>
+                    <region></region>
+                    <country>NZ</country>
+                </postal>
+                <email>gregsdennis@yahoo.com</email>
+            </address>
+        </author>
+
+        <date year="2019"/>
+        <workgroup>Internet Engineering Task Force</workgroup>
+        <keyword>JSON</keyword>
+        <keyword>Schema</keyword>
+        <keyword>Hyper Schema</keyword>
+        <keyword>Hypermedia</keyword>
+
+        <abstract>
+            <t>
+                JSON Schema 定义了媒体类型 "application/schema+json", 基于JSON的格式，用于描述JSON数据的结构.
+                JSON Schema 断言JSON文档必须看起来像什么,
+                从中提取信息的方法,
+                以及如何与之交互.
+                "application/schema-instance+json"媒体类型提供了与"application/schema-instance+json"附加的功能丰富的集成，
+                这超出了"application/schema-instance+json"文档可以提供的功能。
+            </t>
+        </abstract>
+        <note title="致读者">
+            <t>
+                该草案的问题列表可以在以下位置找到
+                <eref target="https://github.com/json-schema-org/json-schema-spec/issues"/>.
+            </t>
+            <t>
+                有关更多信息，请参见<eref target="https://json-schema.org/"/>.
+            </t>
+            <t>
+                要提供反馈，请使用此问题跟踪工具，主页上列出的通信方法，或通过电子邮件至该文档编辑者。
+            </t>
+        </note>
+    </front>
+
+    <middle>
+        <section title="Introduction">
+            <t>
+                JSON Schema 是用于定义JSON数据结构的JSON媒体类型. JSON Schema旨在定义JSON数据的验证，文档，超链接导航和交互控制。
+            </t>
+            <t>
+                该规范定义了 JSON Schema 核心术语和机制，包括通过引用指向另一个 JSON Schema，取消引用 JSON Schema 参考，
+                指定所使用的词汇表以及定义预期的输出。
+            </t>
+            <t>
+                其他规范定义了执行有关验证，链接，注释，导航和交互的断言的词汇表。
+            </t>
+        </section>
+
+        <section title="约定和术语">
+            <t>
+                <!-- The text in this section has been copied from the official boilerplate,
+                and should not be modified.-->
+
+                关键词 "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+                "SHOULD NOT", "RECOMMENDED", "MAY", 和 "OPTIONAL" 本文档中的解释如 <xref target="RFC2119">RFC 2119</xref>.
+            </t>
+
+            <t>
+                条款 "JSON", "JSON text", "JSON value", "member", "element", "object", "array",
+                "number", "string", "boolean", "true", "false", 和 "null" 本文档中的解释应如 <xref target="RFC8259">RFC
+                8259</xref>.
+            </t>
+        </section>
+
+        <section title="总览">
+            <t>
+                本文档提出了一种新的媒体类型"application/schema+json"，以标识用于描述JSON数据的JSON Schema。
+                它还提出了另一种可选的媒体类型"application/schema-instance+json"，以提供其他集成功能。
+                JSON Schema本身就是JSON文档。此规范和相关规范定义了关键字，允许作者以多种方式描述JSON数据。
+            </t>
+            <t>
+                JSON Schema 使用关键字来声明JSON实例的约束或使用其他信息注释这些实例。
+                其他关键字用于将断言和注释应用于更复杂的JSON数据结构，或基于某种条件。
+            </t>
+            <t>
+                为了促进重用，可以将关键字组织成词汇表。词汇表由关键字列表以及它们的语法和语义组成。
+            </t>
+            <t>
+                可以通过定义其他词汇表来扩展JSON模式，也可以通过在任何词汇表外定义其他关键字来非正式地扩展JSON模式。
+                无法识别的单个关键字将被忽略，而在声明使用哪些词汇时，可以控制与无法识别的词汇有关的行为。
+            </t>
+            <t>
+                本文档定义了一个核心词汇表，任何实现都必须支持该词汇表，并且不能禁用它。
+                其关键字每个均以"$"字符开头，以强调其所需的性质。
+                对于"application/schema+json"媒体类型的功能而言，此词汇表是必不可少的，并用于引导其他词汇表的加载。
+            </t>
+            <t>
+                此外，本文档定义了关键字的推荐词汇表，用于有条件地应用子方案，以及将子方案应用于对象和数组的内容。
+                无论是为非平凡的 JSON 实例编写模式，要么是此词汇表，要么非常类似于为非琐碎的JSON实例编写模式所需要的词汇表​​，
+                无论这些模式是用于断言验证，批注还是两者兼具。
+                尽管不是必需的核心词汇表的一部分，但为了最大程度地实现互操作性，本文档中还包含了该附加词汇表，因此强烈建议您使用它。
+            </t>
+            <t>
+                在其他文档中定义了用于诸如结构验证或超媒体注释之类的其他词汇。
+            </t>
+        </section>
+
+        <section title="定义">
+
+            <section title="JSON 文档">
+                <t>
+                    JSON文档是由 "application/json" 媒体类型描述的信息资源（八位字节系列）。
+                </t>
+                <t>
+                    在JSON模式中，术语“JSON文档”，“JSON文本”和“JSON值”由于其定义的数据模型而可以互换。
+                </t>
+                <t>
+                    JSON Schema 仅在JSON文档上定义.
+                    但是，可以根据JSON Schema解释可以根据JSON Schema数据模型进行解析或处理的任何文档或内存结构,
+                    包括像 <xref target="RFC7049">CBOR</xref>.
+                </t>
+            </section>
+
+            <section title="实例">
+                <t>
+                    应用了模式的JSON文档被称为“实例”。
+                </t>
+
+                <section title="实例数据模型">
+                    <t>
+                        JSON Schema根据数据模型解释文档。根据此数据模型解释的JSON值称为“实例”。
+                    </t>
+                    <t>
+                        实例具有六种基本类型之一，并取决于类型的可能值范围：
+
+                        <list style="hanging">
+                            <t hangText="null:">JSON "null" 值</t>
+                            <t hangText="boolean:">"true"或"false"值，来自JSON"true"或"false"值</t>
+                            <t hangText="object:">将字符串映射到实例的无序属性集，来自JSON“object”值</t>
+                            <t hangText="array:">实例的有序列表，来自JSON“arary”值</t>
+                            <t hangText="number:">以10为底的十进制数的任意精度值， 来自JSON“number”值</t>
+                            <t hangText="string:">一串Unicode代码, 来自JSON“string”值</t>
+                        </list>
+                    </t>
+                    <t>
+                        空格和格式问题，包括数据模型中相等的数字的不同词汇表示形式，因此不在JSON Schema的范围内。
+                        希望使用词汇表述中的此类差异的 JSON Schema
+                        <xref target="vocabulary">词汇</xref>
+                        表应定义关键字，以精确地解释数据模型中的格式化字符串，而不是依赖于具有原始的JSON表述Unicode字符。
+                    </t>
+                    <t>
+                        由于对象不能具有具有相同键的两个属性，因此未定义尝试在单个对象中定义具有相同键的两个属性的JSON文档的行为。
+                    </t>
+                    <t>
+                        请注意，JSON Schema词汇表可以自由定义自己的扩展类型系统。这不应与此处定义的核心数据模型类型混淆。
+                        例如，“integer”是词汇表定义为关键字值的一种合理类型，但是数据模型在整数和其他数字之间没有区别。
+                    </t>
+                </section>
+
+                <section title="实例媒体类型">
+                    <t>
+                        JSON Schema 旨在与"application/json"文档以及使用"+json"结构化语法后缀的媒体类型完全兼容。
+                    </t>
+                    <t>
+                        每种媒体类型都定义了一些对架构有用的功能，即媒体类型参数和URI片段标识符语法和语义。
+                        这些功能分别用于内容协商和计算实例中特定位置的URI。
+                    </t>
+                    <t>
+                        该规范定义了"application/schema-instance+json"媒体类型，
+                        以允许实例作者充分利用参数和片段标识符来实现这些目的。
+                    </t>
+                </section>
+
+                <section title="实例平等">
+                    <t>
+                        当且仅当两个JSON实例具有相同的类型并且根据数据模型具有相同的值时，才认为它们是相等的。
+                        具体来说，这意味着：
+
+                        <list>
+                            <t>都为 null；要么</t>
+                            <t>两者都是 true；要么</t>
+                            <t>两者都是 false；要么</t>
+                            <t>两者都是字符串，并且每个字符都是相同的；要么</t>
+                            <t>两者都是数字，并且具有相同的数学值；要么</t>
+                            <t>两者都是数组，并且每个项目的值相等；要么</t>
+                            <t>两者都是对象，一个属性中的每个属性恰好具有一个属性，其键与另一个属性相等，而另一个属性具有相等的值。</t>
+                        </list>
+                    </t>
+                    <t>
+                        Implied in this definition is that arrays must be the same length,
+                        objects must have the same number of members,
+                        properties in objects are unordered,
+                        there is no way to define multiple properties with the same key,
+                        and mere formatting differences (indentation, placement of commas, trailing
+                        zeros) are insignificant.
+                    </t>
+                </section>
+            </section>
+
+            <section title="JSON Schema Documents" anchor="schema-document">
+                <t>
+                    JSON模式文档，或简称为模式，是用于描述实例的JSON文档。
+                    模式本身可以解释为一个实例，但是应该始终为它指定媒体类型"application/schema+json"，
+                    而不是"application/schema-instance+json"。
+                    定义了"application/schema+json"媒体类型，
+                    以提供"application/schema-instance+json"提供的媒体类型参数和片段标识符语法和语义的超集。
+                </t>
+                <t>
+                    JSON模式必须是对象或布尔值。
+                </t>
+                <section title="JSON模式对象和关键字">
+                    <t>
+                        应用于实例的对象属性称为关键字或架构关键字。从广义上讲，关键字属于以下四类之一：
+                        <list style="hanging">
+                            <t hangText="identifiers:">
+                                通过设置架构的规范URI和/或更改确定基础URI的方式来控制架构标识
+                            </t>
+                            <t hangText="assertions:">
+                                应用于实例时产生布尔结果
+                            </t>
+                            <t hangText="annotations:">
+                                将信息附加到实例以供应用程序使用
+                            </t>
+                            <t hangText="applicators:">
+                                将一个或多个子方案应用于实例中的特定位置，并合并或修改其结果
+                            </t>
+                            <t hangText="reserved locations:">
+                                不直接影响结果，而是为特定目的保留位置以确保互操作性
+                            </t>
+                        </list>
+                    </t>
+                    <t>
+                        关键字可以分为多个类别，尽管应用程序应该仅根据子计划的结果来产生断言结果。他们不应定义与子计划无关的其他约束。
+                    </t>
+                    <t>
+                        扩展关键字（意味着在本文档及其附带内容之外定义的关键字）也可以自由定义其他行为。
+                    </t>
+                    <t>
+                        JSON模式可能包含不是模式关键字的属性。未知关键字应被忽略。
+                    </t>
+                    <t>
+                        空模式是没有属性或只有未知属性的JSON模式。
+                    </t>
+                </section>
+                <section title="Boolean JSON Schemas">
+                    <t>
+                        布尔模式值“ true”和“ false”是琐碎的模式，无论实例值如何，它们总是作为断言结果产生自己。他们从不产生注释结果。
+                    </t>
+                    <t>
+                        这些布尔模式的存在是为了阐明模式作者的意图并促进模式处理的优化。
+                        它们的行为与以下模式对象相同（其中“not”是本文档中定义的子模式应用程序词汇的一部分）。
+                        <list style="hanging">
+                            <t hangText="true:">
+                                始终通过验证，就像空模式 {}
+                            </t>
+                            <t hangText="false:">
+                                始终使验证失败，就像模式 {"not":{}}
+                            </t>
+                        </list>
+                        尽管空模式对象是明确的，但“false”模式有许多可能的等效项。使用布尔值可以确保意图对于人类读者和实现而言都是清楚的。
+                    </t>
+                </section>
+                <section title="Schema Vocabularies">
+                    <t>
+                        模式词汇，或简称词汇，是一组关键字，其语法和语义。词汇通常是围绕特定目的而组织的。
+                        JSON Schema的不同用法（例如验证，超媒体或用户界面生成）将涉及不同的词汇集。
+                    </t>
+                    <t>
+                        词汇表是JSON Schema中重用的主要单元，因为架构图作者可以指出处理该架构所必需或可选的词汇表。
+                        由于词汇是由元模式中的URI标识的，因此通用实现可以加载扩展以支持以前未知的词汇。
+                        尽管可以在任何词汇表之外支持关键字，但是没有类似机制来指示各个关键字的用法。
+                    </t>
+                </section>
+                <section title="Meta-Schemas">
+                    <t>
+                        本身描述模式的模式称为元模式。元模式用于验证JSON模式并指定其使用的词汇表。
+                    </t>
+                    <t>
+                        通常，元模式将指定一组词汇表，并验证符合这些词汇表语法的架构。
+                        但是，元模式和词汇表是分开的，以允许元模式比词汇表的规范要求更严格或更宽松地验证架构一致性。元方案还可以描述和验证不属于正式词汇表的其他关键字。
+                    </t>
+                </section>
+                <section title="Root Schema and Subschemas and Resources" anchor="root">
+                    <t>
+                        JSON模式资源是一种
+                        <xref target="RFC6596">规范的</xref>
+                        <xref target="RFC3986">绝对URI</xref>.
+                    </t>
+                    <t>
+                        根模式是包含整个相关JSON文档的模式。根模式始终是模式资源，其中的URI如本节中所述确定
+                        <xref target="initial-base" format="counter"></xref>.
+                    </t>
+                    <t>
+                        一些关键字本身采用模式，从而允许嵌套JSON模式:
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+    "title": "root",
+    "items": {
+        "title": "array item"
+    }
+}
+]]>
+                        </artwork>
+                    </figure>
+                    <t>
+                        在此示例文档中，标题为“array”的模式是子模式，标题为“root”的模式是根模式。
+                    </t>
+                    <t>
+                        与根模式一样，子模式也可以是对象或布尔值。
+                    </t>
+                    <t>
+                        如本节所述
+                        <xref target="id-keyword" format="counter"></xref>, JSON Schema文档可以包含多个JSON Schema资源。
+                        当不加限定地使用时，术语“root schema”是指文档的根模式。
+                        在某些情况下，将讨论资源根模式。资源的根模式是其顶层模式对象，
+                        如果要将资源提取到独立的JSON Schema文档中，则它也是文档的根模式。
+                    </t>
+                </section>
+            </section>
+
+        </section>
+
+        <section title="Fragment Identifiers(片段标识符)" anchor="fragments">
+            <t>
+                按照第3.1条 <xref target="RFC6839"></xref>,
+                为任何 "+json" 媒体类型指定的片段标识符的语法和语义应与为 "application/json" 指定的一样。
+                （在本文档发布时，没有为 "application/json" 定义片段识别语法。）
+            </t>
+            <t>
+                此外，"application/schema+json" 媒体类型支持两种片段标识符结构：纯名称和JSON指针。
+                "application/schema-instance+json" 媒体类型支持一种片段标识符结构：JSON指针。
+            </t>
+            <t>
+                JSON指针用作URI片段标识符的说明在
+                <xref target="RFC6901">RFC 6901</xref>.
+                对于支持两种片段标识符语法的 "application/schema+json"，
+                与JSON指针语法匹配的片段标识符（包括空字符串）必须被解释为JSON指针片段标识符。
+            </t>
+            <t>
+                根据W3C
+                <xref target="W3C.WD-fragid-best-practices-20121025">片段标识符的最佳做法</xref>,
+                "application/schema+json"中的纯名称片段标识符保留用于引用本地命名的架构。
+                所有与JSON指针语法不匹配的片段标识符都必须解释为纯名称片段标识符。
+            </t>
+            <t>
+                指定了在 "application/schema+json" 文档中定义和引用的纯名称片段标识符，
+                在 <xref target="anchor">"$anchor" 关键词</xref> 章节.
+            </t>
+            <t>
+            </t>
+        </section>
+
+        <section title="General Considerations(一般注意事项)">
+
+            <section title="JSON值范围">
+                <t>
+                    实例可以是由定义的任何有效JSON值 <xref target="RFC8259">JSON</xref>.
+                    JSON Schema 对类型没有任何限制：JSON Schema可以描述任何JSON值，例如，包括null。
+                </t>
+            </section>
+
+            <section title="编程语言独立" anchor="language">
+                <t>
+                    JSON Schema 与编程语言无关，并且支持数据模型中描述的所有值范围。
+                    但是请注意，某些语言和JSON解析器可能无法在内存中表示JSON可描述的全部值。
+                </t>
+            </section>
+
+            <section title="数学整数" anchor="integers">
+                <t>
+                    某些编程语言和解析器对浮点数使用的内部表示形式与对整数使用不同的内部表示形式。
+                </t>
+                <t>
+                    为了保持一致，整数JSON数字不应该用小数部分编码。
+                </t>
+            </section>
+
+            <section title="Regular Expressions(常用表达)" anchor="regex">
+                <t>
+                    关键字可以使用正则表达式来表达约束，或将实例值约束为正则表达式。这些正则表达式应根据所描述的正则方言有效
+                    <xref target="ecma262">ECMA 262，第15.10.1节</xref>.
+                </t>
+                <t>
+                    此外，鉴于对正则表达式构造的高度支持，模式作者应将自己限制在以下正则表达式标记中：
+
+                    <list>
+                        <t>单个Unicode字符，由<xref target="RFC8259">JSON规范</xref>;
+                        </t>
+                        <t>simple character classes ([abc]), range character classes ([a-z]);</t>
+                        <t>complemented character classes ([^abc], [^a-z]);</t>
+                        <t>simple quantifiers: "+" (one or more), "*" (zero or more), "?" (zero or
+                            one), and their lazy versions ("+?", "*?", "??");
+                        </t>
+                        <t>range quantifiers: "{x}" (exactly x occurrences), "{x,y}" (at least x, at
+                            most y, occurrences), {x,} (x occurrences or more), and their lazy
+                            versions;
+                        </t>
+                        <t>the beginning-of-input ("^") and end-of-input ("$") anchors;</t>
+                        <t>simple grouping ("(...)") and alternation ("|").</t>
+                    </list>
+                </t>
+                <t>
+                    最后，无论在开头还是结尾，实现都不得使用正则表达式进行锚定。例如，这意味着模式 "es" 匹配 "expression".
+                </t>
+            </section>
+
+            <section title="扩展JSON模式" anchor="extending">
+                <t>
+                    任何实体都可以定义附加的模式关键字和模式词汇。除明确协议外，
+                    架构作者不应期望未明确记录此类支持的实现会支持这些其他关键字和词汇。
+                    实施应忽略它们不支持的关键字。
+                </t>
+                <t>
+                    实现可以提供注册或加载它们不直接支持的词汇处理程序的能力。注册和实现此类处理程序的确切机制取决于实现。
+                </t>
+            </section>
+
+        </section>
+
+        <section title="Keyword Behaviors(关键字行为)">
+            <t>
+                JSON Schema关键字分为几种常规行为类别。
+                Assertions 验证实例满足约束，并产生布尔结果。
+                Annotations 附加了应用程序可以按照其认为合适的方式使用的信息。
+                Applicators 将子计划应用于实例的各个部分并合并其结果。
+            </t>
+            <t>
+                扩展关键字应保持在这些类别内，请记住，特别是注释非常灵活。
+                通常，将复杂行为更好地基于注释数据委派给应用程序，而不是直接将其作为模式关键字实施。
+                但是，扩展关键字可以为特殊目的定义其他行为。
+            </t>
+            <t>
+                根据架构评估实例涉及针对实例中的适当位置处理架构中的所有关键字.
+                通常, applicator 关键字被处理，直到没有任何模式对象 applicators (and therefore no subschemas) 可达.
+                实例中的适当位置根据架构对象中的 assert 关键字和 annotation 关键字进行评估, 根据应用程序的规则将其结果收集到父模式中.
+            </t>
+            <t>
+                一旦评估了其所有子方案，就可以完成对父模式对象的评估, 尽管在某些情况下，由于声明结果，评估可能会短路.
+                收集注释时, 由于需要检查所有子方案以进行注释收集，因此某些断言结果不可能短路, 包括那些无法进一步更改断言结果的变量。
+            </t>
+            <section title="Lexical Scope and Dynamic Scope(词汇范围和动态范围)" anchor="scopes">
+                <t>
+                    虽然大多数JSON Schema关键字都可以自己评估, 或至多需要考虑同一架构对象中相邻关键字的值或结果, 一些具有更复杂的行为。
+                </t>
+                <t>
+                    关键字的词法范围由对象和数组的嵌套JSON数据结构确定.
+                    此类范围最大的是整个架构文档.
+                    最小范围是没有子模式的单个架构对象.
+                </t>
+                <t>
+                    可以使用部分值（例如URI引用）定义关键字，
+                    必须将其与另一个值（例如通过JSON文档的词法结构找到的另一个URI引用或完整URI）进行解析.
+                    “$id” 核心关键字和“base” JSON Hyper-Schema关键字就是这种行为的示例.
+                    此外，此规范中的“$ref”和“$recursiveRef” 以这种方式解析其值，尽管它们不会更改解析其他值的方式。
+                </t>
+                <t>
+                    请注意，某些关键字（例如“$schema”）适用于整个架构文档的词法范围，因此必须只能出现在模式资源的根模式中。
+                </t>
+                <t>
+                    其他关键字可能会考虑在模式评估期间通常与实例文档一起存在的动态范围。
+                    最外面的动态范围是开始处理的架构文档的根模式。
+                    从此根模式到任何特定关键字（包括可能已解析的任何“$ref”和“$recursiveRef”关键字）
+                    的路径都被视为关键字的“validation path（验证路径）”。
+                    <cref>
+                        还是这应该是开始处理的模式对象，即使它不是根对象也是如此？
+                        这对于仅在根模式中允许使用“$recursiveAnchor”而在子模式中开始处理的情况具有某些含义。
+                    </cref>
+                </t>
+                <t>
+                    词汇和动态范围会对齐，直到遇到参考关键字. 从动态范围的角度来看，
+                    引用关键字的作用是将处理过程从一种词汇范围转移到另一种词汇范围, 后面的引用与作为值出现的子模式无异.
+                    该引用的另一端通过动态范围解析信息的关键字会将该引用的原始端视为其动态父级,
+                    而不是检查本地词汇包围的父级.
+                </t>
+                <t>
+                    动态范围的概念主要用于"$recursiveRef" 和 "$recursiveAnchor", 并且应被视为高级功能，在定义其他关键字时应谨慎使用.
+                    报告错误和收集的注释时，它也会出现， 因为有可能用不同的动态范围重复访问相同的词汇范围.
+                    在这种情况下，重要的是告知用户产生错误或注释的动态路径。
+                </t>
+            </section>
+            <section title="Keyword Interactions(关键字互动)">
+                <t>
+                    关键字行为可​​以根据的注释结果来定义 <xref target="root">subschemas</xref> 和/或相邻关键字.
+                    这样的关键字绝不能导致循环依赖。
+                    关键字可以根据同一个模式对象中是否存在另一个关键字来修改其行为。
+                    <xref target="schema-document">schema object</xref>.
+                </t>
+            </section>
+            <section title="默认行为">
+                <t>
+                    缺少关键字必须不要产生错误的断言结果，绝对不能产生注释结果，
+                    并且绝对不能使任何其他模式作为其自己的行为定义的一部分进行评估。
+                    但是，鉴于缺少的关键字没有贡献注释，缺少注释结果可能会间接改变其他关键字的行为。
+                </t>
+                <t>
+                    在某些情况下，关键字缺失的关键字断言行为与某个值产生的关键字断言行为相同，
+                    并且关键字定义应在已知的位置注明此类值。
+                    但是，即使产生默认行为的值将在产生注释结果的情况下（如果存在的话），默认行为也绝不能导致注释。
+                </t>
+                <t>
+                    由于注释收集会在计算和内存方面增加大量成本，因此实现可能会选择退出此功能.
+                    然后，对于实现已知的具有依赖于注释结果的断言或施加器行为的关键字，必须将其视为错误，
+                    除非产生相同行为的替代实现可用。适当时，此类关键字应描述合理的替代方法. 这种方法已通过
+                    "<xref target="additionalItems" format="title"/>" 和
+                    "<xref target="additionalProperties" format="title"/>" 本文档中的关键字。
+                </t>
+            </section>
+            <section title="Identifiers" anchor="identifiers">
+                <t>
+                    标识符设置模式的规范URI，或影响如何解析此类URI <xref target="references">references</xref>, 或两者。
+                    本文档中定义的核心词汇表定义了几个识别关键字，最著名的是“$id”。
+                </t>
+                <t>
+                    规范模式URI不得在处理实例时更改，但影响URI引用解析的关键字可能具有仅在运行时完全确定的行为。
+                </t>
+                <t>
+                    尽管可以使用自定义标识符关键字，但词汇设计人员应注意不要破坏核心关键字的功能。
+                    例如，此规范中的“$recursiveAnchor”关键字将其URI解析效果限制为匹配的“$recursiveRef”关键字，而不会干扰“$ref”。
+                </t>
+            </section>
+            <section title="Applicators" anchor="applicators">
+                <t>
+                    Applicators 允许构建比单个模式对象无法完成的更为复杂的模式. 针对实例评估实例
+                    <xref target="schema-document">schema 文档</xref>
+                    首先应用 <xref target="root">根模式</xref> 到完整的实例文档.
+                    从那里开始，使用称为 Applicators 的关键字来确定应用哪些其他模式. 这样模式可以就地应用于当前位置或子位置.
+                </t>
+                <t>
+                    要应用的模式可以作为包含全部或部分关键字值的子方案出现.
+                    或者，Applicators 可以引用同一模式文档中其他位置或其他模式中的模式.
+                    标识此类引用模式的机制由关键字定义。
+                </t>
+                <t>
+                    Applicators 关键字还定义子模式或引用的模式布尔值的方式
+                    <xref target="assertions">断言</xref>
+                    修改和/或组合结果以生成 Applicators 的布尔结果. Applicators 可以将任何布尔逻辑运算应用于子方案的声明结果,
+                    但绝不能引入自己的新断言条件。
+                </t>
+                <t>
+                    <xref target="annotations">注解</xref>
+                    根据每个注释关键字指定的规则组合结果。
+                </t>
+                <section title="Referenced and Referencing Schemas(引用和引用模式)" anchor="referenced">
+                    <t>
+                        正如在<xref target="applicators"/>, applicator 关键字可以引用要应用的架构,
+                        而不是将其作为子模式包含在 applicator 的值中. 在这种情况下，所应用的模式称为引用模式，
+                        而包含 applicator 关键字的模式就是引用模式。
+                    </t>
+                    <t>
+                        虽然根模式和子模式是基于模式在模式文档中的位置的静态概念，但是引用和引用模式是动态的.
+                        在根据实例评估实例期间，不同的架构对可能会以各种引用和引用的方式出现.
+                    </t>
+                    <t>
+                        供参考 applicators, 例如
+                        <xref target="ref">"$ref"</xref>, 可以通过对模式文档的词汇范围进行静态分析来确定所引用的模式.
+                        其他，例如"$recursiveRef" and "$recursiveAnchor", 可以利用动态作用域，
+                        因此只能在使用实例评估架构的过程中解决.
+                    </t>
+                </section>
+            </section>
+
+            <section title="Assertions" anchor="assertions">
+                <t>
+                    JSON Schema 可用于声明JSON文档上的约束, 通过或未通过断言.
+                    该方法可用于验证是否符合约束条件，或记录满足约束条件所需的条件.
+                </t>
+                <t>
+                    当根据架构声明评估实例时，JSON架构实现会产生单个布尔结果.
+                </t>
+                <t>
+                    实例只能使模式中存在的断言失败。
+
+                </t>
+                <section title="断言和实例基元类型">
+                    <t>
+                        大多数断言仅将值限制在某种原始类型内。当实例的类型不是关键字所针对的类型时，则认为该实例符合声明。
+                    </t>
+                    <t>
+                        例如, 伴随验证词汇中的“maxLength”关键字
+                        <xref target="json-schema-validation">validation vocabulary</xref>:
+                        只会限制某些字符串（太长）无效. 如果实例是数字，布尔值，空值，数组或对象，则针对此断言有效.
+                    </t>
+                    <t>
+                        此行为使关键字可以更容易地与具有多个原始类型的实例一起使用.
+                        伴随验证词汇表还包含“type”关键字，该关键字可以将实例独立地限制为一个或多个基本类型.
+                        这允许用例的简洁表达，例如一个函数，该函数可能返回一定长度的字符串或空值:
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+    "type": ["string", "null"],
+    "maxLength": 255
+}
+]]>
+                        </artwork>
+                        <postamble>
+                            如果“maxLength”还将实例类型限制为字符串，
+                            那么，这样表达起来会很麻烦，因为编写的示例实际上不允许使用空值.
+                            除非另外明确指定，否则每个关键字都会单独评估,
+                            因此，如果“ maxLength”将实例限制为字符串, 那么在“type”中包含“null”将没有任何有用的效果.
+                        </postamble>
+                    </figure>
+                </section>
+            </section>
+
+            <section title="Annotations" anchor="annotations">
+                <t>
+                    无论何时实例对包含注释的模式对象及其所有父模式对象进行验证，JSON模式都可以使用信息对实例进行注释。信息可以是一个简单的值，也可以根据实例内容计算。
+                </t>
+                <t>
+                    注释被附加到实例中的特定位置。由于可以将许多子模式应用于任何单一位置，所以注释关键字需要指定对具有不同值的关键字的多个可应用事件的任何异常处理。
+                </t>
+                <t>
+                    与断言结果不同，注释数据可以采用各种各样的形式，这些形式提供给应用程序以供其根据需要使用。JSON模式实现不希望代表应用程序使用收集到的信息。
+                </t>
+                <t>
+                    除非另外指定，否则annotation关键字的值就是关键字的值。然而，其他行为是可能的。例如,
+                    <xref target="json-hyper-schema">JSON Hyper-Schema's</xref>
+                    "links" 关键字是一个复杂的注释，它生成的值部分基于实例数据。
+                </t>
+                <t>
+                    虽然可以对断言进行“短路”评估，但收集注释需要检查应用于实例位置的所有模式,
+                    即使它们不能更改整个断言结果。唯一的例外是验证失败的模式对象的子模式可能被跳过，因为失败的模式不会保留注释。
+                </t>
+
+                <section title="Collecting Annotations">
+                    <t>
+                        Annotations 由显式定义注释收集行为的关键字收集。注意，布尔模式不能产生注释，因为它们不使用关键字。
+                    </t>
+                    <t>
+                        收集的注释必须包含以下信息:
+                        <list>
+                            <t>
+                                生成注释的关键字的名称
+                            </t>
+                            <t>
+                                作为JSON指针附加到的实例位置
+                            </t>
+                            <t>
+                                模式位置路径，指示如何按照引用关键字(如“$ref”)到达绝对模式位置。
+                            </t>
+                            <t>
+                                附加关键字的绝对模式位置，如URI。如果它与上面的模式位置路径相同，则可以忽略它。
+                            </t>
+                            <t>
+                                附加的价值
+                            </t>
+                        </list>
+                    </t>
+                    <t>
+                        如果同一个关键字将来自多个模式位置的值附加到同一个实例位置，
+                        并且该注释定义了组合这些值的过程，那么组合的值也必须与实例位置相关联.
+                        <xref target="output">输出格式</xref>
+                        本规范中包含的注释信息满足这一要求.
+                    </t>
+                    <section title="区分多个值">
+                        <t>
+                            应用程序可以根据提供该值的模式位置来决定使用哪个注释值。这是为了允许灵活使用。收集模式位置有助于这种使用。
+                        </t>
+                        <t>
+                            例如，考虑这个模式，它使用来自<xref target="json-schema-validation">验证规范</xref>的注释和断言：
+                        </t>
+                        <figure>
+                            <preamble>
+                                注意，为了清晰起见，有些行被包装了。
+                            </preamble>
+                            <artwork>
+                                <![CDATA[
+{
+    "title": "Feature list",
+    "type": "array",
+    "items": [
+        {
+            "title": "Feature A",
+            "properties": {
+                "enabled": {
+                    "$ref": "#/$defs/enabledToggle",
+                    "default": true
+                }
+            }
+        },
+        {
+            "title": "Feature B",
+            "properties": {
+                "enabled": {
+                    "description": "如果设置为null，则功能B继承功能A的启用值",
+                    "$ref": "#/$defs/enabledToggle"
+                }
+            }
+        }
+    ],
+    "$defs": {
+        "enabledToggle": {
+            "title": "Enabled",
+            "description": "是否启用(true)、禁用(false)或自动控制(null)",
+            "type": ["boolean", "null"],
+            "default": null
+        }
+    }
+}
+]]>
+                            </artwork>
+                        </figure>
+                        <t>
+                            在这个例子中，特性A和特性B都利用了可重用的“enabledToggle”模式。
+                            该模式使用“title”、“description”和“default”注释，这些注释都没有定义处理多个值的特殊行为。
+                            因此，应用程序必须决定如何处理特性A的附加“默认”值和特性B的附加“描述”值。
+                        </t>
+                        <t>
+                            应用程序程序员和模式作者需要在用法上达成一致。
+                            对于本例，我们假设他们同意使用最特定的“default”值，并且任何附加的、更通用的“default”值都将被默认忽略。
+                            我们还假设他们同意所有的“描述”文本都要使用，以最通用的开头，以最具体结尾。
+                            这要求模式作者以这种方式组合时写出工作的描述。
+                        </t>
+                        <t>
+                            应用程序可以使用模式位置路径来确定哪些值是哪些值。特性的即时“启用”属性模式中的值更具体，
+                            而“$ref”引用的可重用模式下的值更通用。模式位置路径将显示是否通过跨越“$ref”找到每个值。
+                        </t>
+                        <t>
+                            因此，特性A将使用true的默认值，而特性B将使用null的通用默认值。
+                            特性A只有来自“enabledToggle”模式的通用描述，而特性B将使用该描述，
+                            并附加其本地定义的描述，该描述解释了如何解释空值。
+                        </t>
+                        <t>
+                            请注意，不同的应用程序可能采用其他合理的方法。
+                            例如，应用程序可能将“default”的两个不同值的存在视为错误，而不管它们的模式位置如何。
+                        </t>
+                    </section>
+                    <section title="Annotations and Assertions">
+                        <t>
+                            产生错误断言结果的模式对象必须不产生任何注释结果，
+                            无论是来自它们自己的关键字还是来自子模式中的关键字。
+                        </t>
+                        <t>
+                            注意，总体模式结果可能仍然包括从其他模式位置收集的注释。鉴于这种模式:
+                        </t>
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+{
+    "oneOf": [
+        {
+            "title": "整数值",
+            "type": "integer"
+        },
+        {
+            "title": "字符串值",
+            "type": "string"
+        }
+    ]
+}
+]]>
+                            </artwork>
+                        </figure>
+                        <t>
+                            And the instance和实例 <spanx style="verb">"这是一个字符串"</spanx>,
+                            由于模式对象中的类型断言失败，标题注释“整数值”被丢弃。
+                            在实例传递字符串类型断言时，保留标题注释“字符串值”。
+                        </t>
+                    </section>
+                    <section title="Annotations and Applicators">
+                        <t>
+                            除了可能定义自己的注释结果之外，
+                            applicator关键字聚合子模式或引用模式中收集的注释.
+                            聚合注释值的规则由每个annotation关键字定义，并且不受用于组合断言结果的逻辑的直接影响。
+                        </t>
+                    </section>
+                </section>
+            </section>
+            <section title="预留的位置">
+                <t>
+                    第四类关键字只是保留了一个位置来存放模式作者感兴趣的、不适合重用的可重用组件或数据。
+                    这些关键字不影响验证或注释结果。
+                    它们在核心词汇表中的目的是确保位置可用于某些目的，并且不会被扩展关键字重新定义。
+                </t>
+                <t>
+                    而这些关键词并不直接影响结果, 如本节所述
+                    <xref target="non-schemas" format="counter"></xref>
+                    在某些情况下，为可重用模式保留位置的不可识别的扩展关键字可能与引用发生不希望的交互。
+                </t>
+            </section>
+        </section>
+        <section title="JSON模式核心词汇表">
+            <t>
+                本节中声明的所有以“$”开头的关键字组成JSON模式核心词汇表。
+                这些关键字在顺序处理任何模式或元模式时都是必需的，
+                包括那些跨多个文档的模式或元模式，或者是为需要保证互操作性的目的保留关键字。
+            </t>
+            <t>
+                必须始终认为核心词汇表是必需的，以便引导进一步词汇表的处理。使用
+                <xref target="vocabulary">"$vocabulary"</xref>
+                关键字来声明所使用的词汇表的元模式必须显式地列出核心词汇表，核心词汇表的值必须为true，表明它是必需的。
+            </t>
+            <t>
+                这个词汇表(只有这个词汇表)的false值的行为是未定义的，就像“$vocabulary”存在但不包含核心词汇表时的行为一样。
+                但是，建议实现检测这些情况，并在它们发生时提出错误。声明元模式可选地使用Core没有意义。
+            </t>
+            <t>
+                不使用“$vocabulary”的元模式必须考虑要求核心词汇表，就好像其URI的值为true一样。
+            </t>
+            <t>
+                核心词汇表的当前URI是:
+                <eref target="https://json-schema.org/draft/2019-09/vocab/core"/>.
+            </t>
+            <t>
+                对应的元模式的当前URI是:
+                <eref target="https://json-schema.org/draft/2019-09/meta/core"/>.
+            </t>
+            <t>
+                虽然“$”前缀不是为核心词汇表正式保留的，但建议扩展关键字(在词汇表或其他词汇表中)以“$”以外的字符开头，以避免将来可能发生的冲突。
+            </t>
+
+            <section title="Meta-Schemas and Vocabularies" anchor="vocabulary">
+                <t>两个概念，元模式和词汇表，用于告知实现如何解释模式。
+                    每个模式都有一个元模式，可以使用“$schema”关键字声明它。
+                </t>
+                <t>元模式有两个目的:
+                    <list style="hanging">
+                        <t hangText="声明使用的词汇">"$vocabulary"关键字，当它出现在元模式中时，
+                            声明哪些词汇可用来在引用该元模式的模式中使用。词汇表定义关键字语义及其一般语法。
+                        </t>
+                        <t hangText="描述有效的模式语法">
+                            一个模式必须成功地验证它的元模式，这限制了可用关键字的语法。
+                            所描述的语法应该与所声明的词汇表兼容;虽然可以描述不兼容的语法，
+                            但是这样的元模式不太可能有用。
+                        </t>
+                    </list>
+                </t>
+                <t>
+                    元模式与词汇表是分开的，以允许以不同的方式组合词汇表，
+                    并允许元模式作者施加额外的约束，如禁止某些关键字，或执行异常严格的语法验证，
+                    就像在开发和测试周期中所做的那样。每个词汇表通常标识一个只包含词汇表关键字的元模式。
+                </t>
+                <t>
+                    元模式创作是JSON模式的一种高级用法，因此元模式特性的设计强调灵活性而不是简单性。
+                </t>
+                <section title='The "$schema" Keyword'>
+                    <t>
+                        “$schema”关键字既用作JSON模式特性集标识符，也用作资源的标识符，
+                        而资源本身就是一个JSON模式，它描述了为这个特定的特性集编写的一组有效的模式。
+                    </t>
+                    <t>
+                        这个关键字的值必须是 <xref target="RFC3986">URI</xref>(包含一个方案)，这个URI必须被规范化。
+                        当前模式必须对这个URI标识的元模式有效。
+                    </t>
+                    <t>
+                        “$schema”关键字应该在资源根模式中使用。它不能出现在资源子模式中。
+                        如果根模式中没有，则产生的行为是由实现定义的。
+                    </t>
+                    <t>
+                        如果一个文档中存在多个模式资源，那么所有模式资源对于“$schema”应该具有相同的值。
+                        同一个模式文档中“$schema”的不同值的结果是由实现定义的。
+                        <cref>
+                            在同一个文档中使用多个“$schema”关键字意味着功能集和行为可以在文档中更改。
+                            这将需要解决一些尚未明确界定的执行问题。
+                            因此，虽然只在根模式中使用“$schema”的模式可能仍然是模式创作的最佳实践，
+                            但是实现行为在将来的草案中可能会被修改或解放。
+                        </cref>
+                        <cref>
+                            嵌入式模式资源的例外是允许将多个模式资源绑定到单个模式文档中，而不需要更改它们的内容，如本规范后面所述。
+                        </cref>
+                        <!--
+                            特别是，验证一个实例的过程，包括将模式作为其元模式的实例进行验证，
+                            只允许在整个实例文档中使用一组规则。在对非模式实例进行验证的过程中，不存在与更改元模式相同的情况。
+                        -->
+                    </t>
+                    <t>
+                        此属性的值在本文档和其他文档的其他地方定义，并由其他各方定义。
+                    </t>
+                </section>
+                <section title='The "$vocabulary" Keyword'>
+                    <t>
+                        元模式中使用“$vocabulary”关键字来标识可用于该元模式描述的模式中的词汇表。
+                        它还用于指示每个词汇表是必需的还是可选的，因为实现必须理解所需的词汇表才能成功地处理模式。
+                    </t>
+                    <t>
+                        这个关键字的值必须是一个对象。对象中的属性名必须是URI(包含一个模式)，
+                        并且必须对这个URI进行规范化。每个作为属性名出现的URI标识一组特定的关键字及其语义。
+                    </t>
+                    <t>
+                        URI可能是一个URL，但是可检索资源的性质目前还没有定义，并保留为将来使用。
+                        词汇表作者可以使用词汇表规范的URL作为词汇表URI，它是人类可读的媒体类型，如text/html或text/plain。
+                        <cref>
+                            词汇文档可能会添加到未来的草案中。
+                            目前，确定关键字集就足够了，因为与元模式验证一起使用就是当前“词汇表”的工作方式。
+                            任何将来的词汇表文档格式都将被指定为JSON文档，
+                            因此在此期间使用文本/html或其他非JSON格式不会产生任何将来的歧义。
+                        </cref>
+                    </t>
+                    <t>
+                        对象属性的值必须是布尔值。
+                        如果该值为真，则不识别词汇表的实现必须拒绝处理任何用“$schema”声明此元模式的模式。
+                        如果该值为false，则不识别词汇表的实现应继续处理此类模式。
+                    </t>
+                    <t>
+                        Per <xref target="extending" format="counter"></xref>,
+                        不能识别的关键字应该被忽略。对于由未识别的词汇表定义的关键字，情况仍然如此。
+                        目前还无法区分词汇表中定义的未识别的关键字和不属于任何词汇表的关键字。
+                    </t>
+                    <t>
+                        “$vocabulary”关键字应该用于任何打算作为元模式使用的模式文档的根模式。它不能出现在子模式中。
+                    </t>
+                    <t>
+                        在没有作为元模式处理的模式文档中，必须忽略“$vocabulary”关键字。
+                        这允许根据自己的元模式M对元模式M进行验证，而不需要验证器理解M声明的词汇表。
+                    </t>
+                    <section title="默认的词汇表">
+                        <t>
+                            如果没有“$词汇表”，则实现可以根据元模式确定行为，
+                            前提是它可以通过引用模式的“$schema”关键字的URI值识别。
+                            这就是在词汇表存在之前如何识别行为(例如超模式用法)的方式。
+                        </t>
+                        <t>
+                            如果模式引用的元模式不被识别或丢失，则行为是由实现定义的。
+                            如果实现继续处理模式，它必须假设使用核心词汇表。
+                            如果实现是为特定的目的而构建的，那么它应该假定使用了所有与此目的最相关的词汇表。
+                        </t>
+                        <t>
+                            例如，作为验证器的实现应该假定使用此规范和相应的验证规范中的所有词汇表。
+                        </t>
+                    </section>
+                    <section title="Non-inheritability的词汇表">
+                        <t>
+                            注意，对“$vocabulary”的处理限制意味着使用“$ref”或类似的关键字
+                            引用其他元模式的元模式不会自动继承那些其他元模式的词汇表声明。
+                            所有这样的声明都必须在每个模式文档的根中重复，以供作为元模式使用。这在
+                            <xref target="example-meta-schema">示例元模式</xref>
+                            中得到了证明
+
+                            <cref>
+                                这个需求允许实现在一个地方为每个元模式查找所有词汇表需求信息。
+                                由于模式可扩展性意味着有无数通过引用来组合更细粒度元模式的潜在方法，
+                                因此要求实现预测所有可能性并在引用的元模式中搜索词汇表将是非常繁重的。
+                            </cref>
+                        </t>
+                    </section>
+                </section>
+                <section title="更新元模式和词汇表uri">
+                    <t>
+                        为了纠正错误，可以在规范草案之间发布更新的词汇表和元模式uri。
+                        实现应该考虑在这个规范草案之后和下一个规范草案之前的uri日期，
+                        以指示与这里列出的相同的语法和语义。
+                    </t>
+                </section>
+            </section>
+
+            <section title="Base URI, Anchors, and Dereferencing">
+                <t>
+                    为了在一个庞大的生态系统中区分模式，模式由 <xref target="RFC3986">URI</xref>,
+                    并且可以通过指定其他模式的URI来嵌入对它们的引用。
+                </t>
+                <t>
+                    几个关键词可以接受一个相对的 <xref target="RFC3986">URI-reference</xref>,
+                    或用于构造相对uri引用的值。对于这些关键字，必须建立一个基本URI来解析引用。
+                </t>
+
+                <section title='"$id”关键字' anchor="id-keyword">
+                    <t>
+                        “$id”关键字用其标识模式资源
+                        <xref target="RFC6596">规范</xref>
+                        URI.
+                    </t>
+                    <t>
+                        注意，这个URI是一个标识符，不一定是网络定位器。对于可通过网络寻址的URL，模式不需要从其规范URI中下载。
+                    </t>
+                    <t>
+                        如果存在，则此关键字的值必须是字符串，并且必须表示有效的
+                        <xref target="RFC3986">URI-reference</xref>. 这个uri引用应该被规范化，并且必须解析为一个
+                        <xref target="RFC3986">绝对的URI</xref>
+                        (without a fragment). 因此，“$id”不能包含非空fragment，也不应该包含空fragment。
+                    </t>
+                    <t>
+                        由于“application/schema+json”媒体类型上下文中的空片段与没有片段的基本URI引用相同的资源，
+                        因此实现可以通过删除fragment来规范化以空片段结尾的URI。
+                        但是，模式作者不应该依赖于这种跨实现的行为。
+                        <cref>
+                            这主要是允许的，因为旧的元模式在它们的$id(或以前的id)中有一个空片段。
+                            将来的草案可能会完全禁止使用“$id”中的空片段。
+                        </cref>
+                    </t>
+                    <t>
+                        根据
+                        <xref target="RFC3986">RFC 3986 section 5.1.1</xref>
+                        关于内容中嵌入的基本URI的规定， 这个URI还充当模式资源中关键字中相对URI引用的基本URI。
+                    </t>
+                    <t>
+                        子模式中“$id”的存在表明子模式在单个模式文档中构成不同的模式资源。
+                        此外，根据<xref target="RFC3986">RFC 3986 section 5.1.2</xref>关于封装实体的规定，
+                        如果子模式中的"$id"是一个相对URI引用，则解析该引用的基本URI是父模式资源的URI。
+                    </t>
+                    <t>
+                        如果没有父模式对象显式地将自己标识为具有“$id”的资源，则基本URI是整个文档的URI，
+                        如
+                        <xref target="initial-base">前面部分中给出的步骤所建立的。</xref>
+                    </t>
+                    <section title="标识根模式">
+                        <t>
+                            JSON模式文档的根模式应该包含一个“$id”关键字，并且<xref target="RFC3986">绝对uri</xref>(包含一个模式，但是没有片段)。
+                        </t>
+                    </section>
+                </section>
+                <section title='使用“$anchor”定义与位置无关的标识符"'
+                         anchor="anchor">
+                    <t>
+                        使用JSON指针片段需要了解模式的结构。
+                        当编写模式文档以提供可重用的模式时，最好使用不绑定到任何特定结构位置的纯名称片段。
+                        这允许重新定位子模式，而不需要更新JSON指针引用。
+                    </t>
+                    <t>
+                        “$anchor”关键字用于指定这样一个片段。它是一个标识符关键字，只能用于创建纯名称片段。
+                    </t>
+                    <t>
+                        如果存在，则此关键字的值必须是字符串，该字符串必须以字母开头 ([A-Za-z]),
+                        后面跟任意数量的字母、数字 ([0-9]),
+                        连字符 ("-"), 下划线 ("_"), 冒号 (":"), or periods (".").
+                        <cref>
+                            注意，锚字符串不包含“#”字符，因为它不是uri引用。
+                            在URI中使用“$anchor”:“foo”将成为片段“#foo”。
+                            参见下面的完整示例。
+                        </cref>
+                    </t>
+                    <t>
+                        结果片段所附加的基本URI由“$id”关键字决定，
+                        如前一节所述。如果将同一个模式文档中的两个“$anchor”关键字应用于不同的基本uri，
+                        则它们可能具有相同的值，因为得到的完整uri将是不同的。
+                        但是，两个具有相同值和相同基础URI的“$anchor”关键字的效果是未定义的。
+                        如果检测到这种用法，实现可能会引发错误。
+                    </t>
+                </section>
+
+                <section title="模式的引用" anchor="references">
+                    <t>
+                        可以使用几个关键字来引用要应用到当前实例位置的模式。
+                        “$ref”和“$recursiveRef”是applicator关键字，它们将引用的模式应用于实例。
+                        “$recursiveAnchor”是一个标识符关键字，它控制用于解析“$recursiveRef”的URI引用值的基本URI的确定方式。
+                    </t>
+                    <t>
+                        由于“$ref”和“$recursiveRef”的值是URI引用，
+                        因此可以将模式外部化或跨多个文件划分，并提供通过自引用验证递归结构的能力。
+                    </t>
+                    <t>
+                        由这些关键字产生的解析URI不一定是网络定位符，而只是一个标识符。
+                        如果模式是一个可通过网络寻址的URL，则不需要从该地址下载它，
+                        而且实现不应该假设它们在遇到可通过网络寻址的URI时应该执行网络操作。
+                    </t>
+
+                    <section title='直接引用“$ref”' anchor="ref">
+                        <t>
+                            “$ref”关键字是一个应用程序，用于引用静态标识的模式。它的结果是引用模式的结果。
+                            <cref>
+                                请注意，如何确定结果的这个定义意味着在相同的模式对象中，“$ref”旁边可以出现其他关键字。
+                            </cref>
+                        </t>
+                        <t>
+                            “$ref”属性的值必须是一个字符串，它是一个uri引用。根据当前URI基础解析，它生成要应用的模式的URI。
+                        </t>
+                    </section>
+
+                    <section title='带有“$recursiveRef”和“$recursiveAnchor”的递归引用'
+                             anchor="recursive-ref">
+                        <t>
+                            “$recursiveRef”和“$recursiveAnchor”关键字用于构造可扩展的递归模式。
+                            递归模式是一个具有对其自身根的引用的模式，由空片段URI引用(“#”)标识。
+                        </t>
+                        <t>
+                            简单地说，“$recursiveRef”的行为与“$ref”相同，除非它的目标模式包含“$recursiveAnchor”，其值为true。
+                            在这种情况下，将检查动态范围以确定新的基URI，并根据该基URI重新评估“$recursiveRef”中的URI引用。
+                            与使用“$id”的基本URI更改不同，使用“$recursiveAnchor”的更改是在每次解析“$recursiveRef”时计算的，
+                            并且不会影响任何其他关键字。
+                        </t>
+                        <t>
+                            有关使用这些关键字的示例，请参见附录
+                            <xref target="recursive-example" format="counter"/>
+                            <cref>
+                                先前草案中的超模式元模式和本草案中的超模式元模式之间的区别戏剧性地展示了这些关键字的效用。
+                            </cref>
+                        </t>
+                        <section title='使用“$recursiveRef”动态递归引用'>
+                            <t>
+                                “$recursiveRef”属性的值必须是一个字符串，它是一个uri引用。
+                                它是一个通过引用的应用程序，使用一个动态计算的基本URI来解析它的值。
+                            </t>
+                            <t>
+                                此关键字的行为仅为值“#”定义。实现可以选择将其他值视为错误。
+                                <cref>
+                                    这个限制将来可能会放宽，但是到目前为止，只有值“#”有一个明确的用例。
+                                </cref>
+                            </t>
+                            <t>
+                                “$recursiveRef”的值最初根据当前的基本URI解析，其方式与“$ref”相同。
+                            </t>
+                            <t>
+                                结果URI标识的模式将检查是否存在“$recursiveAnchor”，并根据下一节中对该关键字的描述计算新的基本URI。
+                            </t>
+                            <t>
+                                最后，根据生成最终解析引用URI的“$recursiveRef”确定的新基URI解析“$recursiveRef”的值。
+                            </t>
+                            <t>
+                                注意，在没有“$recursiveAnchor”的情况下(在某些情况下它是存在的)，“$recursiveRef”的行为与“$ref”是相同的。
+                            </t>
+                            <t>
+                                与“$ref”一样，这个关键字的结果是引用模式的结果。
+                            </t>
+                        </section>
+                        <section title='使用“$recursiveAnchor”启用递归'>
+                            <t>
+                                “$recursiveAnchor”属性的值必须是一个布尔值。
+                            </t>
+                            <t>
+                                “$recursiveAnchor”用于在运行时为“$recursiveRef”动态标识一个基本URI，
+                                方法是标记这样的计算可以从哪里开始，在哪里结束。
+                                这个关键字不能影响其他关键字的基URI，除非显式地定义它们依赖于它。
+                            </t>
+                            <t>
+                                如果设置为true，那么当包含的模式对象用作“$recursiveRef”的目标时，
+                                通过检查<xref target="scope ">动态范围</xref>，
+                                为最外层的模式确定一个新的基URI，该模式也包含值为true的“$recursiveAnchor”。
+                                然后将该模式的基URI用作动态基URI。
+                            </t>
+                            <t>
+                                如果不存在这样的模式，则基本URI是不变的。
+                            </t>
+                            <t>
+                                如果该关键字设置为false，则基本URI不变。
+                            </t>
+                            <t>
+                                省略此关键字的行为与false值相同。
+                            </t>
+                        </section>
+                    </section>
+
+                </section>
+
+                <section title='与“$defs”一起重用模式' anchor="defs">
+                    <t>
+                        “$defs”关键字为模式作者保留了一个位置，以便将可重用的JSON模式内联到更通用的模式中。
+                        关键字不会直接影响验证结果。
+                    </t>
+                    <t>
+                        这个关键字的值必须是一个对象。此对象的每个成员值必须是有效的JSON模式。
+                    </t>
+                    <t>
+                        例如，这里有一个描述正整数数组的模式，其中正整数约束是“$defs”中的一个子模式:
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+    "type": "array",
+    "items": { "$ref": "#/$defs/positiveInteger" },
+    "$defs": {
+        "positiveInteger": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+        }
+    }
+}
+]]>
+                        </artwork>
+                    </figure>
+                </section>
+            </section>
+
+            <section title='使用"$comment"评论'>
+                <t>
+                    这个关键字为来自模式作者、读者或模式维护者的注释保留了一个位置。
+                </t>
+                <t>
+                    此关键字的值必须是字符串。实现不能将此字符串呈现给最终用户。
+                    编辑模式的工具应该支持显示和编辑这个关键字。
+                    这个关键字的值可以用于调试或错误输出，这是为使用模式的开发人员准备的。
+                </t>
+                <t>
+                    模式词汇表应该允许在任何包含词汇表关键字的对象中使用“$comment”。
+                    实现可以假设“$comment”是允许的，除非词汇表特别禁止它。
+                    词汇表不能指定“$comment”在本规范中描述之外的任何效果。
+                </t>
+                <t>
+                    其他媒体类型或编程语言的工具从或到 "application/schema+json"
+                    翻译时可以选择将该媒体类型或编程语言的本机注释转换为或从"$comment" 值.
+                    当同时存在本机注释和“$comment”属性时，这种翻译的行为依赖于实现。
+                </t>
+                <t>
+                    实现应该将“$comment”等同于未知的扩展关键字。
+                    它们可以在处理期间的任何时候删除“$comment”值。
+                    特别是，当需要考虑已部署模式的大小时，这允许缩短模式。
+                </t>
+                <t>
+                    实现不能基于“$comment”属性的存在、不存在或内容采取任何其他操作。
+                    特别是，“$comment”的值不能作为注释结果收集。
+                </t>
+            </section>
+        </section>
+
+        <section title="加载和处理模式">
+            <t>
+            </t>
+            <section title="加载模式">
+                <section title="Initial Base URI" anchor="initial-base">
+                    <t>
+                        <xref target="RFC3986">RFC3986 Section 5.1</xref>
+                        定义如何确定文档的默认基URI。
+                    </t>
+                    <t>
+                        从信息上来说，模式的初始基本URI是找到它的URI，不管它是网络位置、本地文件系统，
+                        还是任何已知模式的URI可识别的任何其他情况。
+                    </t>
+                    <t>
+                        如果模式文档没有定义带有“$id”(嵌入在内容中)的显式基URI，
+                        则基URI是根据<xref target="RFC3986">RFC 3986 section 5</xref>确定的。
+                    </t>
+                    <t>
+                        如果没有已知的源，或者该源没有已知的URI模式，
+                        则可以使用合适的特定于实现的缺省URI，
+                        如<xref target="RFC3986">RFC 3986 Section 5.1.4</xref>所述。
+                        建议实现记录它们所假设的任何默认基URI。
+                    </t>
+                    <t>
+                        除非下一节中描述的“$id”关键字出现在根模式中，否则这个基URI应该被视为模式文档的根模式资源的规范URI。
+                    </t>
+                </section>
+
+                <section title="加载引用的模式">
+                    <t>
+                        使用uri来标识远程模式并不一定意味着要下载任何东西，相反，
+                        JSON模式实现应该提前了解它们将使用哪些模式，以及标识它们的uri。
+                    </t>
+                    <t>
+                        当模式被下载时，例如，一个通用的用户代理直到运行时才知道下载哪个模式，
+                        请查看对<xref target="hypermedia">超媒体</xref>的用法。
+                    </t>
+                    <t>
+                        实现应该能够将任意URI与任意模式关联起来，
+                        并且/或自动关联模式的“$id”--给定的URI，这取决于验证器在模式中的信任程度。
+                        这样的uri和模式可以在处理实例之前提供给实现，
+                        也可以在处理模式文档时在模式文档中记录，从而产生关联，
+                        如附录<xref target="idExamples" format="counter"></xref>所示。
+                    </t>
+                    <t>
+                        一个模式可能(很可能)有多个URI，但是URI无法识别多个模式。
+                        当多个模式试图标识为相同的URI时，验证器应该提出一个错误条件。
+                    </t>
+                </section>
+
+                <section title="检测一个Meta-Schema">
+                    <t>
+                        如果正在检查模式，则实现必须将其识别为元模式，
+                        因为它是由另一个模式的“$schema”关键字标识的。
+                        这意味着单个模式文档有时可能被视为常规模式，而其他时候则被视为元模式。
+                    </t>
+                    <t>
+                        在检查作为其自身元模式的模式时，当实现开始将其作为常规模式进行处理时，
+                        将根据这些规则进行处理。
+                        但是，在第二次加载时，由于检查了它自己的“$schema”值，它被视为一个元模式。
+                        因此，在一个会话过程中，以两种方式处理相同的文档。
+                    </t>
+                    <t>
+                        实现可能允许将模式显式地作为元模式传递，以实现特定的目的，
+                        例如预先加载一个常用元模式并预先检查它的词汇表支持需求。
+                        元模式的作者不能期望这样的特性在实现之间是可互操作的。
+                    </t>
+                </section>
+            </section>
+
+            <section title="Dereferencing">
+                <t>
+                    模式可以由任何给定的URI标识，包括JSON指针或直接由“$id”提供的URI。
+                    在所有情况下，取消对“$ref”引用的引用涉及到首先将其值解析为针对当前基本URI的URI引用，
+                    每个<xref target="RFC3986">RFC 3986</xref>。
+                </t>
+                <t>
+                    如果得到的URI标识了当前文档中的一个模式，或者标识了实现可用的另一个模式文档，那么应该自动使用该模式。
+                </t>
+                <t>
+                    例如，考虑这个模式:
+                </t>
+
+                <figure>
+                    <artwork>
+                        <![CDATA[
+{
+"$id": "https://example.net/root.json",
+"items": {
+  "type": "array",
+  "items": { "$ref": "#item" }
+},
+"$defs": {
+  "single": {
+    "$anchor": "item",
+    "type": "object",
+    "additionalProperties": { "$ref": "other.json" }
+    }
+  }
+}
+]]>
+                    </artwork>
+                </figure>
+                <t>
+                    当实现遇到 &lt;#/$defs/single&gt;模式,
+                    它将针对当前基本URI的“$id”URI引用解析为从
+                    &lt;https://example.net/root.json#item&gt;.
+                </t>
+                <t>
+                    当一个实现里面 &lt;#/items&gt; 模式, 它遇到的 &lt;#item&gt; 引用, 并将其解析为
+                    &lt;https://example.net/root.json#item&gt;, 它已经在同一文档中定义，因此可以自动使用。
+                </t>
+                <t>
+                    当实现遇到引用时 "other.json", 它将这个解析为 &lt;https://example.net/other.json&gt;, 在本文档中没有定义。
+                    如果以其他方式向实现提供了具有该标识符的模式，则还可以自动使用它。
+                    <cref>
+                        当引用的模式未知时，实现应该做什么?是否在某些情况下允许自动解除网络引用?同源政策?
+                        用户可配置的选项吗?对于由Hyper-Schema描述的不断发展的API，
+                        我们希望动态地向系统添加新的模式，因此对预加载模式文档的绝对要求是不可行的。
+                    </cref>
+                </t>
+
+                <section title="JSON指针片段和内联模式资源"
+                         anchor="embedded">
+                    <t>
+                        由于JSON指针URI片段是基于模式文档的结构构造的，所以可以通过JSON指针片段来标识嵌入的模式资源及其子模式，
+                        这些JSON指针片段可以相对于其自身的规范URI，也可以相对于包含资源的URI。
+                    </t>
+                    <t>
+                        从概念上讲，无论每个资源是与
+                        <xref target="references">模式引用</xref>
+                        相连接的单独文档，
+                        还是作为具有一个或多个模式资源作为子模式嵌入的单个文档，
+                        一组链接的模式资源都应该具有相同的行为。
+                    </t>
+                    <t>
+                        由于涉及到与父模式资源的URI相关的JSON指针片段的URI在将嵌入的模式移动到单独的文档并引用时不再有效，
+                        所以应用程序和模式不应该使用这样的URI来标识嵌入的模式资源或其中的位置。
+                    </t>
+                    <figure>
+                        <preamble>
+                            考虑下面的模式文档，其中包含嵌入其中的另一个模式资源:
+                        </preamble>
+                        <artwork>
+                            <![CDATA[
+{
+  "$id": "https://example.com/foo",
+  "items": {
+    "$id": "https://example.com/bar",
+    "additionalProperties": {}
+  }
+}
+]]>
+                        </artwork>
+                        <postamble>
+                            URI“https://example.com/foo#/items/additionalProperties”
+                            指向嵌入资源中的“additionalProperties”关键字的模式。
+                            然而，该模式的规范URI是“https://example.com/bar#/additionalProperties”。
+                        </postamble>
+                    </figure>
+                    <figure>
+                        <preamble>
+                            现在考虑使用“$ref”的URI值通过引用链接以下两个模式资源:
+                        </preamble>
+                        <artwork>
+                            <![CDATA[
+{
+  "$id": "https://example.com/foo",
+  "items": {
+    "$ref": "bar"
+  }
+}
+
+{
+  "$id": "https://example.com/bar",
+  "additionalProperties": {}
+}
+]]>
+                        </artwork>
+                        <postamble>
+                            在这里，我们看到“additionalProperties”子模式的规范URI仍然有效，
+                            而以“#/items/$ref”开头的片段的非规范URI现在解析为空。
+                        </postamble>
+                    </figure>
+                    <t>
+                        还要注意“https://example.com/foo#/items”在两种安排中都是有效的，
+                        但是解析为不同的值。此URI的功能类似于资源的检索URI。
+                        虽然有效，但最好检查解析后的值并使用“$id”(如果值是子模式)，
+                        或者解析引用并使用引用目标的“$id”。
+                    </t>
+                    <t>
+                        实现可能选择不支持通过非规范uri寻址模式。
+                        因此，建议模式作者只使用规范uri，因为使用非规范uri可能会降低模式的互操作性。
+                        <cref>
+                            这是为了避免要求实现跟踪所有可能的基本uri和JSON指针片段的整个堆栈，
+                            因为如果重新组织模式资源，除了一个之外所有的都是脆弱的。
+                            有些人认为这很容易，所以禁止它是没有意义的，
+                            而另一些人则认为它会使模式标识复杂化，应该禁止。
+                            鼓励对这个主题进行反馈。
+                        </cref>
+                    </t>
+                    <t>
+                        附录中提供了此类非规范uri的更多示例，以及可以使用的适当规范uri
+                        <xref target="idExamples" format="counter"></xref>.
+                    </t>
+                </section>
+            </section>
+
+            <section title="说明">
+                <section title="防止无限递归">
+                    <t>
+                        模式不能对实例运行无限循环。
+                        例如，如果两个模式“#alice”和“#bob”都有一个指向另一个的“allOf”属性，
+                        那么简单验证器可能会陷入无限递归循环中，试图验证实例。
+                        模式不应该像这样使用无限递归嵌套;
+                        行为是未定义的。
+                    </t>
+                </section>
+
+                <section title="对可能的非模式的引用" anchor="non-schemas">
+                    <t>
+                        子模式对象(或布尔对象)可以通过使用已知的applicator关键字或使用保留位置的关键字
+                        (如<xref target="defs">"$defs"</xref>)来识别，
+                        这些关键字接受一个或多个子模式作为值。
+                        这些关键字可以是“$defs”和来自本文档的标准应用程序，
+                        或者来自已知词汇表的扩展关键字，或者特定于实现的自定义关键字。
+                    </t>
+                    <t>
+                        未知关键字的多层结构能够引入嵌套的子模式，这些模式受“$id”处理规则的约束。
+                        因此，在这样一个不可识别的结构中拥有一个引用目标不能可靠地实现，并且产生的行为是未定义的。
+                        类似地，在已知关键字下的引用目标(已知其值不是模式)会导致未定义的行为，以避免为实现增加检测此类目标的负担。
+                        <cref>
+                            这些场景类似于通过HTTP获取模式，但是接收的响应是内容类型而不是“应用程序/模式+json”。
+                            实现当然可以尝试将其解释为模式，但是原始服务器不能保证它实际上是这样的。
+                            因此，将其解释为这样具有安全含义并可能产生不可预测的结果。
+                        </cref>
+                    </t>
+                    <t>
+                        请注意，与“$defs”具有相同语法和语义的单层自定义关键字不允许任何中间的“$id”关键字，
+                        因此在尝试使用任何引用目标作为模式的实现下将正确运行。
+                        然而，这种行为是特定于实现的，不能依赖于互操作性。
+                    </t>
+                </section>
+            </section>
+
+            <section title="关联实例和模式">
+
+                <section title="使用超媒体" anchor="hypermedia">
+
+                    <t>
+                        HTTP服务器广泛采用JSON作为自动api和机器人。
+                        本节描述如何以更rest式的方式增强JSON文档的处理，
+                        同时使用支持媒体类型和<xref target="RFC8288">Web链接</xref>的协议。
+                    </t>
+
+                    <section title='链接到模式'>
+                        <t>
+                            建议模式描述的实例使用“describe by”链接关系提供到可下载JSON模式的链接。像
+                            <xref target="W3C.REC-ldp-20150226">Linked Data Protocol 1.0, section 8.1</xref>所定义的.
+                        </t>
+
+                        <t>
+                            在HTTP中，这样的链接可以使用<xref target="RFC8288">链接头</xref>附加到任何响应。
+                            这种标题的一个例子是:
+                        </t>
+
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        Link: <https://example.com/my-hyper-schema#>; rel="describedby"
+        ]]>
+                            </artwork>
+                        </figure>
+
+                    </section>
+
+
+                    <section title='通过媒体类型参数标识模式' anchor="parameter">
+                        <t>
+                            媒体类型可能允许“schema”媒体类型参数，这使HTTP服务器能够基于模式执行内容类型协商。
+                            媒体类型参数必须是一个空白分隔的uri列表(即相对引用无效)。
+                        </t>
+                        <t>
+                            当使用媒体类型application/schema-instance+json时，必须提供“schema”参数。
+                        </t>
+                        <t>
+                            当使用媒体类型application/schema+json时，可能会提供“schema”参数。
+                            如果提供，它应该包含与“$schema”关键字标识的相同的URI，并且可能包含其他URI。
+                            “$schema”URI必须被认为是模式的规范元模式，而不管是否存在替代或附加的元模式作为媒体类型参数。
+                        </t>
+                        <t>
+                            模式URI是不透明的，不应该自动取消引用。
+                            如果实现不理解所提供模式的语义，则实现可以遵循“bedby”链接(如果有的话)，
+                            该链接可以提供关于如何处理模式的信息。
+                            因为“schema”不一定指向网络位置，所以“bedby”关系用于链接到可下载的schema。
+                            但是，为了简单起见，模式作者应该尽可能使这些uri指向相同的资源。
+                        </t>
+
+                        <t>
+                            在HTTP中，media-type参数将被发送到Content-Type头文件中:
+                        </t>
+
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        Content-Type: application/json;
+                  schema="https://example.com/my-hyper-schema#"
+        ]]>
+                            </artwork>
+                        </figure>
+
+                        <t>
+                            多个模式用空格分隔，表示实例符合所有列出的模式:
+                        </t>
+
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        Content-Type: application/json;
+                  schema="https://example.com/alice https://example.com/bob"
+        ]]>
+                            </artwork>
+                        </figure>
+
+                        <t>
+                            媒体类型参数也用在HTTP的接受请求头:
+                        </t>
+
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        Accept: application/json;
+                  schema="https://example.com/qiang https://example.com/li",
+                application/json;
+                  schema="https://example.com/kumar"
+        ]]>
+                            </artwork>
+                        </figure>
+
+                        <t>
+                            与Content-Type一样，同一个字符串中的多个模式参数请求一个符合所有列出模式的实例。
+                        </t>
+
+                        <t>
+                            与Content-Type不同，Accept可以包含多个值，表明客户机可以接受多个媒体类型。
+                            在上面的例子中，请注意，这两种媒体类型的区别仅在于它们的模式参数值。
+                            这请求一个application/json表示，该表示至少符合一个已标识的模式。
+                        </t>
+
+                        <t>
+                            <cref>
+                                本段假设我们可以注册一个“schema”链接关系。
+                                我们现在应该指定类似“tag:json-schema.org,2017:schema”这样的东西吗?
+                            </cref>
+                            HTTP也可以在一个链接中发送“schema”，尽管这可能会影响媒体类型语义和内容类型协商，如果这完全替换了媒体类型参数:
+                        </t>
+
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        Link: </alice>;rel="schema", </bob>;rel="schema"
+        ]]>
+                            </artwork>
+                        </figure>
+
+                    </section>
+
+                    <section title="Usage Over HTTP">
+                        <t>
+                            当用于网络上的超媒体系统时，
+                            <xref target="RFC7231">HTTP</xref>
+                            通常是发布模式的首选协议。
+                            行为不端的客户端可能会给服务器维护者带来问题，
+                            如果他们将模式从网络上拉过来的频率超过了必要的频率，
+                            而实际上可以将模式缓存很长一段时间。
+                        </t>
+                        <t>
+                            HTTP服务器应该在JSON模式上设置长生命周期的缓存头。
+                            HTTP客户端应该观察缓存标头，而不是在其新鲜期内重新请求文档。
+                            分布式系统应该使用共享缓存和/或缓存代理。
+                        </t>
+                        <t>
+                            Clients SHOULD set or prepend a User-Agent header specific to the JSON Schema
+                            implementation or software product. Since symbols are listed in decreasing order
+                            of significance, the JSON Schema library name/version should precede the more
+                            generic HTTP library name (if any). For example:
+                        </t>
+                        <figure>
+                            <artwork>
+                                <![CDATA[
+        User-Agent: product-name/5.4.1 so-cool-json-schema/1.0.2 curl/7.43.0
+        ]]>
+                            </artwork>
+                        </figure>
+                        <t>
+                            客户端应该能够使用“From”报头发出请求，以便服务器操作人员能够联系可能行为不端的脚本的所有者。
+                        </t>
+                    </section>
+
+                </section>
+
+            </section>
+
+        </section>
+
+        <section title="用于应用子模式的词汇表">
+            <t>
+                本节定义applicator关键字的词汇表，建议将这些关键字用作其他词汇表的基础。
+            </t>
+            <t>
+                不使用“$vocabulary”的元模式应该被认为需要这个词汇表，就好像它的URI的值为true一样。
+            </t>
+            <t>
+                该词汇表的当前URI(称为Applicator词汇表)是:
+                <eref target="https://json-schema.org/draft/2019-09/vocab/applicator"/>.
+            </t>
+            <t>
+                对应的元模式的当前URI是:
+                <eref target="https://json-schema.org/draft/2019-09/meta/applicator"/>.
+            </t>
+            <t>
+                为了纠正错误，可以在规范草案之间发布更新的词汇表和元模式uri。
+                实现应该考虑在这个规范草案之后和下一个规范草案之前的uri日期，以指示与这里列出的相同的语法和语义。
+            </t>
+            <section title="关键字独立">
+                <t>
+                    模式关键字通常独立操作，不影响彼此的结果。
+                </t>
+                <t>
+                    为了方便模式作者，这个词汇表中的关键字有一些例外:
+                    <list>
+                        <t>
+                            "additionalProperties" 的行为在 "properties" 和 "patternProperties" 定义的
+                        </t>
+                        <t>
+                            "unevaluatedProperties"的行为是根据"properties", "patternProperties",
+                            "additionalProperties" 和它本身定义的
+                        </t>
+                        <t>
+                            "additionalItems"的行为被定义为"items"
+                        </t>
+                        <t>
+                            “unevaluatedItems”，其行为根据来自“items”、“additionalItems”和自身的注释定义
+                        </t>
+                    </list>
+                </t>
+            </section>
+
+            <section title="应用子模式的关键字" anchor="in-place">
+                <t>
+                    这些关键字将子模式应用于实例中与应用父模式相同的位置。它们允许以各种方式组合或修改子模式结果。
+                </t>
+
+                <section title="使用布尔逻辑应用子模式的关键字" anchor="logic">
+                    <t>
+                        这些关键字对应于组合或修改子模式的布尔断言结果的逻辑操作符。
+                        它们对注释集合没有直接影响，尽管它们允许将相同的annotation关键字应用于具有不同值的实例位置。
+                        注释关键字定义自己的规则来组合这些值。
+                    </t>
+                    <section title="allOf" anchor="allOf">
+                        <t>
+                            此关键字的值必须是非空数组。数组的每一项必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果实例成功地验证了由该关键字的值定义的所有模式，则它将成功地验证该关键字。
+                        </t>
+                    </section>
+
+                    <section title="anyOf">
+                        <t>
+                            此关键字的值必须是非空数组。数组的每一项必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果实例成功地验证了由该关键字的值定义的至少一个模式，则它将成功地验证该关键字。
+                            注意，在收集注释时，必须检查所有的子模式，以便从每个成功验证的子模式收集注释。
+                        </t>
+                    </section>
+
+                    <section title="oneOf">
+                        <t>
+                            此关键字的值必须是非空数组。数组的每一项必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果实例成功地验证了由该关键字的值定义的一个模式，则它将成功地验证该关键字。
+                        </t>
+                    </section>
+
+                    <section title="not" anchor="not">
+                        <t>
+                            这个关键字的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果实例未能对该关键字定义的模式成功验证，则该实例对该关键字有效。
+                        </t>
+                    </section>
+                </section>
+
+                <section title="有条件地应用子模式的关键字" anchor="conditional">
+                    <t>
+                        其中三个关键字协同工作，根据另一个子模式的结果实现子模式的条件应用。第四个是特定条件条件的快捷方式。
+                    </t>
+                    <t>
+                        “if”、“then”和“else”不能跨子模式边界相互交互。
+                        换句话说，在“allOf”的一个分支中的“if”不能对另一个分支中的“then”或“else”产生影响。
+                    </t>
+                    <t>
+                        当“if”、“then”或“else”不存在时，它们没有默认行为。
+                        特别是，不能将它们视为带有空模式，
+                        当不存在“if”时，必须完全忽略“then”和“else”。
+                    </t>
+                    <section title="if">
+                        <t>
+                            这个关键字的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            这个关键字的子模式的验证结果对整个验证结果没有直接影响。相反，它控制“then”或“else”关键字中的哪个将被计算。
+                        </t>
+                        <t>
+                            成功验证此关键字的子模式的实例，如果存在，也必须对“then”关键字的子模式值有效。
+                        </t>
+                        <t>
+                            未能对该关键字的子模式进行验证的实例，如果存在，也必须对“else”关键字的子模式值有效。
+                        </t>
+                        <t>
+                            如果正在收集<xref target="annotations">annotations</xref>，
+                            则按照通常的方式从该关键字的子模式中收集它们，包括在该"if"不包含"then"或"else"的情况。
+                        </t>
+                    </section>
+                    <section title="then">
+                        <t>
+                            这个关键字的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果存在“if”，并且实例成功地验证了它的子模式，
+                            那么如果实例也成功地验证了这个关键字的子模式，那么验证就成功了。
+                        </t>
+                        <t>
+                            当“if”不存在时，或者当实例无法对其子模式进行验证时，此关键字没有作用。
+                            在这种情况下，出于验证或注释收集的目的，实现不能根据此关键字对实例求值。
+                        </t>
+                    </section>
+                    <section title="else">
+                        <t>
+                            这个关键字的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果存在“if”，而实例未能对其子模式进行验证，
+                            则如果实例成功地对该关键字的子模式进行验证，则对该关键字进行验证成功。
+                        </t>
+                        <t>
+                            当“if”不存在时，或者当实例成功验证其子模式时，此关键字没有作用。
+                            在这种情况下，出于验证或注释收集的目的，实现不能根据此关键字对实例求值。
+                        </t>
+                    </section>
+                    <section title="dependentSchemas">
+                        <t>
+                            此关键字指定如果实例是对象并包含某个属性，则计算该实例的子模式。
+                        </t>
+                        <t>
+                            这个关键字的值必须是一个对象。对象中的每个值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果对象键是实例中的属性，则整个实例必须针对子模式进行验证。它的使用取决于属性的存在。
+                        </t>
+                        <t>
+                            省略此关键字与空对象具有相同的行为。
+                        </t>
+                    </section>
+                </section>
+            </section>
+            <section title="将子模式应用于子实例的关键字">
+                <t>
+                    每个关键字定义一个规则，用于将其子模式应用于子实例，特别是对象属性和数组项，并组合它们的结果。
+                </t>
+                <section title="将子模式应用到数组的关键字">
+                    <section title="items">
+                        <t>
+                            “items”的值必须是一个有效的JSON模式或一个有效的JSON模式数组。
+                        </t>
+                        <t>
+                            如果“items”是一个模式，那么如果数组中的所有元素都对该模式进行了成功验证，则验证成功。
+                        </t>
+                        <t>
+                            如果“items”是模式的数组，那么如果实例的每个元素在相同的位置(如果有的话)对模式进行验证，则验证成功。
+                        </t>
+                        <t>
+                            此关键字生成一个注释值，该值是该关键字应用子模式的最大索引。
+                            如果将子模式应用于实例的每个索引，例如当“items”是模式时，该值可能是一个布尔值true。
+                        </t>
+                        <t>
+                            将应用于同一实例位置的多个模式的“items”关键字的注释结果组合在一起，
+                            方法是如果其中任何一个值为true，则将组合结果设置为true，否则保留最大的数值。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的断言行为。
+                        </t>
+                    </section>
+
+                    <section title="additionalItems" anchor="additionalItems">
+                        <t>
+                            “additionalItems”的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            这个关键字的行为取决于同一模式对象中“items”的存在和注释结果。
+                            如果存在“items”，并且它的注释结果是一个数字，
+                            那么如果索引中每个大于该数字的实例元素都对“additionalItems”进行验证，那么验证就成功了。
+                        </t>
+                        <t>
+                            否则，如果“items”不存在，或者其注释结果为boolean true，则必须忽略“additionalItems”。
+                        </t>
+                        <t>
+                            如果将“additionalItems”子模式应用于实例数组中的任何位置，它将产生一个布尔值为true的注释结果，类似于“items”的单个模式行为。如果来自应用于相同实例位置的任何子模式的任何“additionalItems”关键字的注释值为true，那么这些关键字的组合结果也为true。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的断言行为。
+                        </t>
+                        <t>
+                            实现可以选择以另一种产生相同效果的方式实现或优化这个关键字，
+                            例如直接检查“items”数组的存在性和大小。不支持注释集合的实现必须这样做。
+                        </t>
+                    </section>
+
+                    <section title="unevaluatedItems" anchor="unevaluatedItems">
+                        <t>
+                            “unevaluatedItems”的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            此关键字的行为取决于应用于被验证的实例位置的相邻关键字的注释结果。
+                            具体来说，来自“items”和“additionalItems”的注释，
+                            可以来自那些与“unevaluatedItems”关键字相邻的关键字。
+                            这两个注释，以及“unevaluatedItems”，
+                            也可以来自任何和所有相邻的<xref target="in-place">in-place applicator</xref>关键字。
+                            这包括但不限于本文档中定义的就地应用程序。
+                        </t>
+                        <t>
+                            如果存在一个“items”注释， 并且它的注释结果是一个数字，
+                            并且不存在“additionalItems”或“unevaluatedItems”注释，
+                            那么如果索引大于“items”注释的每个实例元素都对“unevaluatedItems”进行验证，则验证成功。
+                        </t>
+                        <t>
+                            否则，如果任何“items”、“additionalItems”或“unevaluatedItems”注释的值为布尔值true，
+                            则必须忽略“unevaluatedItems”。
+                            但是，如果没有这些注释，则必须将“unevaluatedItems”应用于数组中的所有位置。
+                        </t>
+                        <t>
+                            这意味着“items”、“additionalItems”和所有的in-place applicators都必须在这个关键字被评估之前进行评估。
+                            扩展关键字的作者不能定义需要在此关键字之前进行评估的就地应用程序。
+                        </t>
+                        <t>
+                            如果将“unevaluatedItems”子模式应用于实例数组中的任何位置，
+                            它将产生一个布尔值true的注释结果，类似于“items”的单个模式行为。
+                            如果来自应用于相同实例位置的任何子模式的任何“unevaluatedItems”关键字的注释值为true，
+                            则这些关键字的组合结果也为true。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的断言行为。
+                        </t>
+                        <t>
+                            不收集注释的实现必须在遇到此关键字时引发错误。
+                        </t>
+                    </section>
+
+                    <section title="contains">
+                        <t>
+                            这个关键字的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果数组实例的至少一个元素对给定模式有效，则该实例对“contains”有效。
+                            注意，在收集注释时，必须将子模式应用于每个数组元素，即使在找到第一个匹配项之后也是如此。
+                            这是为了确保收集了所有可能的注释。
+                        </t>
+                    </section>
+                </section>
+
+                <section title="Keywords for Applying Subschemas to Objects">
+                    <section title="properties">
+                        <t>
+                            “属性”的值必须是一个对象。该对象的每个值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            对于同时出现在实例和作为该关键字值中的名称的每个名称，
+                            如果该名称的子实例成功地针对对应的模式进行验证，则验证成功。
+                        </t>
+                        <t>
+                            此关键字的注释结果是与此关键字匹配的一组实例属性名。
+                            将应用于同一实例位置的多个模式的“properties”关键字的注释结果合并为集合的并集。
+                        </t>
+                        <t>
+                            省略此关键字与空对象具有相同的断言行为。
+                        </t>
+                    </section>
+
+                    <section title="patternProperties">
+                        <t>
+                            “模式属性”的值必须是一个对象。根据ECMA 262正则表达式，
+                            此对象的每个属性名都应该是有效的正则表达式。该对象的每个属性值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果每个实例名与此关键字值中作为属性名出现的任何正则表达式匹配，
+                            则该名称的子实例成功地针对对应于匹配正则表达式的每个模式进行验证，验证将成功。
+                        </t>
+                        <t>
+                            此关键字的注释结果是与此关键字匹配的一组实例属性名。
+                            来自应用于同一实例位置的多个模式的“patternProperties”关键字的注释结果通过集合的并集进行组合。
+                        </t>
+                        <t>
+                            省略此关键字与空对象具有相同的断言行为。
+                        </t>
+                    </section>
+
+                    <section title="additionalProperties" anchor="additionalProperties">
+                        <t>
+                            “additionalProperties”的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            这个关键字的行为取决于同一模式对象中“properties”和“patternProperties”的存在和注释结果。
+                            使用“additionalProperties”进行验证仅适用于实例名的子值，
+                            这些子值不会出现在“properties”或“patternProperties”的注释结果中。
+                        </t>
+                        <t>
+                            对于所有这些属性，如果子实例根据“additionalProperties”模式进行验证，则验证成功。
+                        </t>
+                        <t>
+                            该关键字的注释结果是由该关键字的子模式验证的一组实例属性名。
+                            来自应用于同一实例位置的多个模式的“additionalProperties”关键字的注释结果通过集合的并集进行组合。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的断言行为。
+                        </t>
+                        <t>
+                            可以选择实现或实现优化这个关键词用另一种方式能产生同样的效果,
+                            比如通过直接检查中的名称“属性”和“patternProperties”模式的实例属性集。实现集合不支持注释必须这样做。
+                        </t>
+                    </section>
+
+                    <section title="unevaluatedProperties" anchor="unevaluatedProperties">
+                        <t>
+                            “unevaluatedProperties”的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            此关键字的行为取决于应用于被验证的实例位置的相邻关键字的注释结果。
+                            具体来说，来自“properties”、“patternProperties”和“additionalProperties”的注释，
+                            这些注释可以来自与“unevaluatedProperties”关键字相邻的关键字。
+                            这三个注释，以及“unevaluatedProperties”，
+                            也可以来自任何和所有相邻的<xref target="in-place">in-place applicator</xref>关键字。
+                            这包括但不限于本文档中定义的 in-place applicators。
+                        </t>
+                        <t>
+                            “unevaluatedProperties”验证仅适用于实例名的子值，
+                            这些子值不出现在“properties”、“patternProperties”、
+                            “additionalProperties”或“unevaluatedProperties”注释结果中，
+                            这些注释结果应用于被验证的实例位置。
+                        </t>
+                        <t>
+                            对于所有这些属性，如果子实例根据“unevaluatedProperties”模式进行验证，则验证成功。
+                        </t>
+                        <t>
+                            这意味着"properties", "patternProperties", "additionalProperties",
+                            和所有 in-place applicators 必须在此关键字可以求值之前求值.
+                            扩展关键字的作者不能定义 in-place applicator 需要在这个关键字之前进行计算.
+                        </t>
+                        <t>
+                            该关键字的注释结果是由该关键字的子模式验证的一组实例属性名。
+                            来自应用于同一实例位置的多个模式的“unevaluatedProperties”关键字的注释结果通过集合的并集组合在一起。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的断言行为。
+                        </t>
+                        <t>
+                            不收集注释的实现必须在遇到此关键字时引发错误。
+                        </t>
+                    </section>
+
+                    <section title="propertyNames">
+                        <t>
+                            “propertyNames”的值必须是一个有效的JSON模式。
+                        </t>
+                        <t>
+                            如果实例是对象，如果实例中的每个属性名都对提供的模式进行验证，
+                            则此关键字将进行验证。注意，模式测试的属性名总是字符串。
+                        </t>
+                        <t>
+                            省略此关键字与空模式具有相同的行为。
+                        </t>
+                    </section>
+                </section>
+            </section>
+        </section>
+
+        <section title="输出格式" anchor="output">
+            <t>
+                JSON模式被定义为与平台无关。因此，为了增加跨平台的兼容性，实现应该遵循标准的验证输出格式。
+                本节描述使用者正确解释验证结果所需的最低要求。
+            </t>
+
+            <section title="Format">
+                <t>
+                    JSON模式输出是使用第4.2.1节中描述的JSON模式数据实例模型定义的。
+                    由于特定语言和平台的支持，实现可能会偏离这一点，但是建议通过序列化或其他方式将输出转换为此处定义的JSON格式。
+                </t>
+            </section>
+
+            <section title="Output Formats">
+                <t>
+                    该规范定义了四种输出格式。有关每种格式的要求，请参阅“输出结构”一节。
+                    <list>
+                        <t>
+                            Flag - 一个布尔值，简单地指示整个验证结果，没有进一步的细节。
+                        </t>
+                        <t>
+                            Basic - 以平面列表结构提供验证信息。
+                        </t>
+                        <t>
+                            Detailed - 以基于模式结构的精简层次结构提供验证信息。
+                        </t>
+                        <t>
+                            Verbose - 以与模式的确切结构匹配的非压缩层次结构提供验证信息。
+                        </t>
+                    </list>
+                    实现至少应该提供"flag", "basic", or "detailed" 格式和可能提供的“verbose”格式。
+                    如果它提供一种或多种复杂格式，则还必须提供"flag" 格式. 实现应该在其文档中指定支持的格式.
+                </t>
+
+            </section>
+
+            <section title="最小的信息">
+                <t>
+                    除了简单的“flag”输出之外，其他信息还有助于调试模式或实例。每个子结果至少应该包含本节中包含的信息。
+                </t>
+                <t>
+                    包含所有这些组件的单个对象被视为一个输出单元。
+                </t>
+                <t>
+                    实现可以选择提供附加信息。
+                </t>
+
+                <section title="关键词相对位置">
+                    <t>
+                        验证关键字在验证路径之后的相对位置。
+                        该值必须表示为JSON指针，并且必须包含任何引用应用程序，如“$ref”或“$recursiveRef”。
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+#/properties/width/$ref/minimum
+]]>
+                        </artwork>
+                    </figure>
+                    <t>
+                        注意，由于包含了这些by-reference applicator关键字，这个指针可能无法通过正常的JSON指针进程解析。
+                    </t>
+                    <t>
+                        此信息的JSON密钥是“keywordLocation”。
+                    </t>
+                </section>
+
+                <section title="关键字绝对位置">
+                    <t>
+                        验证关键字的绝对、解除引用的位置。该值必须使用相关模式对象的规范URI表示为绝对URI，
+                        并且不能将引用应用程序(如“$ref”或“$recursiveRef”)作为非终端路径组件包括在内。
+                        如果错误或注释是针对该关键字的，比如一个无法解析的引用，则可能以这些关键字结束。
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+https://example.com/schemas/common#/$defs/count/minimum
+]]>
+                        </artwork>
+                    </figure>
+                    <t>
+                        只有在相对位置不包含引用或模式没有将绝对URI声明为其“$id”时，才可以省略此信息。
+                    </t>
+                    <t>
+                        此信息的JSON键是“absoluteKeywordLocation”。
+                    </t>
+                </section>
+
+                <section title="实例的位置">
+                    <t>
+                        JSON值在被验证的实例中的位置。该值必须表示为URI片段编码的JSON指针。
+                    </t>
+                    <t>
+                        该信息的JSON键是“instanceLocation”。
+                    </t>
+                </section>
+
+                <section title="错误或注释">
+                    <t>
+                        验证产生的错误或注释。
+                    </t>
+                    <t>
+                        对于错误，此规范不定义消息的特定措辞。实现需要提供这一点。
+                    </t>
+                    <t>
+                        对于注释，生成注释的每个关键字都指定其格式。默认情况下，它是关键字的值。
+                    </t>
+                    <t>
+                        失败验证的JSON键是“error”;对于成功的验证，它是“注释”。
+                    </t>
+                </section>
+
+                <section title="嵌套的结果">
+                    <t>
+                        对于这两个层次结构，此属性将包含嵌套的错误和注释。
+                    </t>
+                    <t>
+                        失败验证中嵌套结果的JSON键是“error”;对于成功的验证，它是“注释”。注意复数形式，因为具有嵌套结果的关键字也可能具有局部错误或注释。
+                    </t>
+                </section>
+
+            </section>
+
+            <section title="输出结构">
+                <t>
+                    输出必须是一个包含名为“valid”的布尔属性的对象。
+                    当需要有关结果的附加信息时，输出还必须包含“错误”或“注释”，如下所述。
+                    <list>
+                        <t>
+                            "valid" - 指示整个验证成功或失败的布尔值
+                        </t>
+                        <t>
+                            "errors" - 验证失败产生的错误或注释的集合
+                        </t>
+                        <t>
+                            "annotations" - 成功验证产生的错误或注释的集合
+                        </t>
+                    </list>
+                    对于这些示例，将使用以下模式和实例。
+                </t>
+                <figure>
+                    <artwork>
+                        <![CDATA[
+{
+  "$id": "https://example.com/polygon",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$defs": {
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "additionalProperties": false,
+      "required": [ "x", "y" ]
+    }
+  },
+  "type": "array",
+  "items": { "$ref": "#/$defs/point" },
+  "minItems": 3
+}
+
+[
+  {
+    "x": 2.5,
+    "y": 1.3,
+  },
+  {
+    "x": 1,
+    "z": 6.7
+  }
+]
+]]>
+                    </artwork>
+                </figure>
+                <t>
+                    此实例将无法通过验证并产生错误，但要推断出传递产生注释的模式的示例并不重要。
+                </t>
+                <t>
+                    具体来说，它将产生以下错误:
+                    <list>
+                        <t>
+                            第二个对象缺少一个“y”属性。
+                        </t>
+                        <t>
+                            第二个对象有一个不允许的“z”属性。
+                        </t>
+                        <t>
+                            只有两个对象，但是需要三个。
+                        </t>
+                    </list>
+                    请注意，这些示例中描述的错误消息措辞并不是本规范的要求。
+                    实现应该为它们的受众定制错误消息，或者提供模板机制，允许它们的用户创建自己的消息。
+                </t>
+
+                <section title="Flag">
+                    <t>
+                        在最简单的情况下，只需要满足“valid”有效属性的布尔结果。
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+  "valid": false
+}
+]]>
+                        </artwork>
+                    </figure>
+                    <t>
+                        因为这种格式不会返回任何错误或注释，
+                        所以建议实现使用短路逻辑在确定结果后立即返回失败或成功。
+                        例如，如果一个“anyOf”关键字包含五个子模式，而第二个模式通过了，那么就不需要检查其他三个模式。逻辑可以简单地返回成功。
+                    </t>
+                </section>
+
+                <section title="Basic">
+                    <t>
+                        “Basic”结构是输出单元的平面列表。
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+  "valid": false,
+  "errors": [
+    {
+      "keywordLocation": "#",
+      "instanceLocation": "#",
+      "error": "A subschema had errors."
+    },
+    {
+      "keywordLocation": "#/items/$ref",
+      "absoluteKeywordLocation":
+        "https://example.com/polygon#/$defs/point",
+      "instanceLocation": "#/1",
+      "error": "A subschema had errors."
+    },
+    {
+      "keywordLocation": "#/items/$ref/required",
+      "absoluteKeywordLocation":
+        "https://example.com/polygon#/$defs/point/required",
+      "instanceLocation": "#/1",
+      "error": "Required property 'y' not found."
+    },
+    {
+      "keywordLocation": "#/items/$ref/additionalProperties",
+      "absoluteKeywordLocation":
+        "https://example.com/polygon#/$defs/point/additionalProperties",
+      "instanceLocation": "#/1/z",
+      "error": "Additional property 'z' found but was invalid."
+    },
+    {
+      "keywordLocation": "#/minItems",
+      "instanceLocation": "#",
+      "error": "Expected at least 3 items but found 2"
+    }
+  ]
+}
+]]>
+                        </artwork>
+                    </figure>
+                </section>
+
+                <section title="Detailed">
+                    <t>
+                        “Detailed”结构是基于模式的，对人和机器来说都更具可读性。
+                        以这种方式组织结构使错误之间的关联更加明显。
+                        例如，缺少的“y”属性和额外的“z”属性都来自实例中的相同位置，
+                        这一事实在“基本”结构中并不明显。在层次结构中，相关性更容易识别。
+                    </t>
+                    <t>
+                        结果对象的构造遵循以下规则:
+                        <list>
+                            <t>
+                                所有applicator关键字(“*Of”、“$ref”、“if”/“then”/“else”等)都需要一个节点。
+                            </t>
+                            <t>
+                                没有子节点的节点将被删除。
+                            </t>
+                            <t>
+                                具有单个子节点的节点将被子节点替换。
+                            </t>
+                        </list>
+                        分支节点不需要错误消息或注释。
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+{
+  "valid": false,
+  "keywordLocation": "#",
+  "instanceLocation": "#",
+  "errors": [
+    {
+      "valid": false,
+      "keywordLocation": "#/items/$ref",
+      "absoluteKeywordLocation":
+        "https://example.com/polygon#/$defs/point",
+      "instanceLocation": "#/1",
+      "errors": [
+        {
+          "valid": false,
+          "keywordLocation": "#/items/$ref/required",
+          "absoluteKeywordLocation":
+            "https://example.com/polygon#/$defs/point/required",
+          "instanceLocation": "#/1",
+          "error": "Required property 'y' not found."
+        },
+        {
+          "valid": false,
+          "keywordLocation": "#/items/$ref/additionalProperties",
+          "absoluteKeywordLocation":
+            "https://example.com/polygon#/$defs/point/additionalProperties",
+          "instanceLocation": "#/1/z",
+          "error": "Additional property 'z' found but was invalid."
+        }
+      ]
+    },
+    {
+      "valid": false,
+      "keywordLocation": "#/minItems",
+      "instanceLocation": "#",
+      "error": "Expected at least 3 items but found 2"
+    }
+  ]
+}
+]]>
+                        </artwork>
+                    </figure>
+                </section>
+
+                <section title="Verbose">
+                    <t>
+                        “Verbose”结构是完全实现的层次结构，它与模式的层次结构完全匹配。
+                        这种结构在表单生成和验证中有应用，其中错误的位置非常重要。
+                    </t>
+                    <t>
+                        此结构与“详细”结构的主要区别在于返回所有结果。
+                        这包括子模式验证结果， 否则将被删除(例如，失败验证的注释，‘not’关键字中成功的验证，等等)。
+                        因此，建议每个节点还携带一个“valid”属性来指示该节点的验证结果。
+                    </t>
+                    <t>
+                        因为这个输出结构可能非常大，为了简单起见，这里给出了一个较小的示例。上述例子的完整输出结构的URI为:
+                        <eref target="https://json-schema.org/draft/2019-09/output/verbose-example"/>.
+                    </t>
+                    <figure>
+                        <artwork>
+                            <![CDATA[
+// schema
+{
+  "$id": "https://example.com/polygon",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "properties": {
+    "validProp": true,
+  },
+  "additionalProperties": false
+}
+
+// instance
+{
+  "validProp": 5,
+  "disallowedProp": "value"
+}
+
+// result
+{
+  "valid": false,
+  "keywordLocation": "#",
+  "instanceLocation": "#",
+  "errors": [
+    {
+      "valid": true,
+      "keywordLocation": "#/type",
+      "instanceLocation": "#"
+    },
+    {
+      "valid": true,
+      "keywordLocation": "#/properties",
+      "instanceLocation": "#"
+    },
+    {
+      "valid": false,
+      "keywordLocation": "#/additionalProperties",
+      "instanceLocation": "#",
+      "errors": [
+        {
+          "valid": false,
+          "keywordLocation": "#/additionalProperties",
+          "instanceLocation": "#/disallowedProp",
+          "error": "Additional property 'disallowedProp' found but was invalid."
+        }
+      ]
+    }
+  ]
+}
+]]>
+                        </artwork>
+                    </figure>
+                </section>
+
+                <section title="Output validation schemas">
+                    <t>
+                        为了方便起见，提供了JSON模式来验证实现生成的输出。它的URI是:
+                        <eref target="https://json-schema.org/draft/2019-09/output/schema"/>.
+                    </t>
+                </section>
+
+            </section>
+
+        </section>
+
+        <section title="安全注意事项" anchor="security">
+            <t>
+                模式和实例都是JSON值。因此，<xref target="RFC8259">RFC 8259</xref>定义的所有安全注意事项都适用。
+            </t>
+            <t>
+                实例和模式通常由不受信任的第三方编写，部署在公共Internet服务器上。
+                验证器应该确保根据模式进行的解析和验证不会消耗过多的系统资源。确认器不能陷入无限循环。
+            </t>
+            <t>
+                服务器必须确保恶意方无法通过上传带有预先存在的或非常类似的“$id”的模式来更改现有模式的功能。
+            </t>
+            <t>
+                单个JSON模式词汇表也可能有自己的安全考虑。有关更多信息，请参阅相应的规范。
+            </t>
+            <t>
+                模式作者应该小心处理“$comment”内容，因为恶意实现可能会违反规范向最终用户显示这些内容，
+                或者如果预期会出现这种行为，则无法删除这些内容。
+            </t>
+            <t>
+                恶意的模式作者可以在“$comment”中放置可执行代码或其他危险内容。实现不能解析或以其他方式基于“$comment”内容采取操作。
+            </t>
+        </section>
+
+        <section title="IANA的考虑">
+            <section title="application/schema+json">
+                <t>
+                    JSON模式的MIME媒体类型定义如下:
+
+                    <list>
+                        <t>类型名称: application</t>
+                        <t>子类型名称: schema+json</t>
+                        <t>必需的参数: N/A</t>
+                        <t>
+                            可选参数:
+                            <list style="hanging">
+                                <t hangText="schema:">
+                                    一个由空格分隔的uri组成的非空列表，每个uri标识一个JSON模式资源。
+                                    实例应该成功地针对这些元模式中的至少一个进行验证。
+                                    可能包含非验证元模式的目的是，只要运行时实例对旧版本进行验证，就允许客户端使用旧版本的元模式。
+                                </t>
+                            </list>
+                        </t>
+                        <t>
+                            编码注意事项:编码注意事项与为“application/json”媒体类型指定的注意事项相同。
+                            看到<xref target="RFC8259">JSON</xref>。
+                        </t>
+                        <t>
+                            安全注意事项:请参阅本节
+                            <xref target="security" format="counter"></xref>
+                            above.
+                        </t>
+                        <t>
+                            互操作性注意事项:参见部分
+                            <xref target="language" format="counter"></xref>,
+                            <xref target="integers" format="counter"></xref>, and
+                            <xref target="regex" format="counter"></xref>
+                            above.
+                        </t>
+                        <t>
+                            片段标识符注意事项:参见部分
+                            <xref target="fragments" format="counter"></xref>
+                        </t>
+                    </list>
+                </t>
+            </section>
+            <section title="application/schema-instance+json">
+                <t>
+                    对于需要特定于JSON模式的媒体类型的JSON模式实例，建议的MIME媒体类型定义如下:
+
+                    <list>
+                        <t>类型名称: application</t>
+                        <t>子类型名称: schema-instance+json</t>
+                        <t>
+                            必需的参数:
+                            <list style="hanging">
+                                <t hangText="schema:">
+                                    一个由空格分隔的uri组成的非空列表，每个uri标识一个JSON模式资源。
+                                    实例应该成功地针对至少一个模式进行验证。包含非验证模式的目的可能是，
+                                    只要运行时实例针对旧版本进行验证，就允许客户端使用旧版本的模式。
+                                </t>
+                            </list>
+                        </t>
+                        <t>
+                            编码注意事项:编码注意事项与为“application/json”媒体类型指定的注意事项相同.
+                            See <xref target="RFC8259">JSON</xref>.
+                        </t>
+                        <t>
+                            安全注意事项:请参阅本节
+                            <xref target="security" format="counter"></xref>
+                            above.
+                        </t>
+                        <t>
+                            互操作性注意事项:参见部分
+                            <xref target="language" format="counter"></xref>,
+                            <xref target="integers" format="counter"></xref>, and
+                            <xref target="regex" format="counter"></xref>
+                            above.
+                        </t>
+                        <t>
+                            片段标识符注意事项:参见部分
+                            <xref target="fragments" format="counter"></xref>
+                        </t>
+                    </list>
+                </t>
+            </section>
+        </section>
+    </middle>
+
+    <back>
+        <!-- References Section -->
+        <references title="Normative References">
+            &RFC2119;
+            &RFC3986;
+            &RFC6839;
+            &RFC6901;
+            &RFC8259;
+            &ldp;
+            <reference anchor="ecma262"
+                       target="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf">
+                <front>
+                    <title>ECMA 262 specification</title>
+                    <author/>
+                    <date/>
+                </front>
+            </reference>
+        </references>
+
+        <references title="Informative References">
+            &RFC6596;
+            &RFC7049;
+            &RFC7231;
+            &RFC8288;
+            &fragid-best-practices;
+            <reference anchor="json-schema-validation">
+                <front>
+                    <title>JSON模式验证:用于JSON结构验证的词汇表</title>
+                    <author initials="A." surname="Wright">
+                        <organization/>
+                    </author>
+                    <author initials="H." surname="Andrews">
+                        <organization/>
+                    </author>
+                    <author initials="G." surname="Luff">
+                        <organization/>
+                    </author>
+                    <date year="2017" month="November"/>
+                </front>
+                <seriesInfo name="Internet-Draft" value="draft-handrews-json-schema-validation-02"/>
+            </reference>
+            <reference anchor="json-hyper-schema">
+                <front>
+                    <title>JSON超模式:JSON超媒体注释的词汇表</title>
+                    <author initials="H." surname="Andrews">
+                        <organization/>
+                    </author>
+                    <author initials="A." surname="Wright">
+                        <organization/>
+                    </author>
+                    <date year="2017" month="November"/>
+                </front>
+                <seriesInfo name="Internet-Draft" value="draft-handrews-json-schema-hyperschema-02"/>
+            </reference>
+        </references>
+
+        <section title="Schema identification examples" anchor="idExamples">
+            <figure>
+                <preamble>
+                    考虑下面的模式，其中显示“$id”用于标识根模式和各种子模式，而“$anchor”用于定义纯名称片段标识符。
+                </preamble>
+                <artwork>
+                    <![CDATA[
+{
+    "$id": "https://example.com/root.json",
+    "$defs": {
+        "A": { "$anchor": "foo" },
+        "B": {
+            "$id": "other.json",
+            "$defs": {
+                "X": { "$anchor": "bar" },
+                "Y": {
+                    "$id": "t/inner.json",
+                    "$anchor": "bar"
+                }
+            }
+        },
+        "C": {
+            "$id": "urn:uuid:ee564b8a-7a87-4125-8c96-e9f123d6766f"
+        }
+    }
+}
+]]>
+                </artwork>
+            </figure>
+            <t>
+                以下uri编码的模式
+                <xref target="RFC6901">JSON指针</xref>
+                (相对于根模式) 具有下列基本URI，并且可以根据章节中的任何列出的URI进行标识
+                <xref target="fragments" format="counter"></xref>
+                和
+                <xref target="embedded" format="counter"></xref>
+                以上。
+            </t>
+            <t>
+                <list style="hanging">
+                    <t hangText="# (document root)">
+                        <list style="hanging">
+                            <t hangText="canonical absolute-URI (and also base URI)">
+                                https://example.com/root.json
+                            </t>
+                            <t hangText="canonical URI with pointer fragment">
+                                https://example.com/root.json#
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="#/$defs/A">
+                        <list>
+                            <t hangText="base URI">https://example.com/root.json</t>
+                            <t hangText="canonical URI with plain fragment">
+                                https://example.com/root.json#foo
+                            </t>
+                            <t hangText="canonical URI with pointer fragment">
+                                https://example.com/root.json#/$defs/A
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="#/$defs/B">
+                        <list style="hanging">
+                            <t hangText="base URI">https://example.com/other.json</t>
+                            <t hangText="canonical URI with pointer fragment">
+                                https://example.com/other.json#
+                            </t>
+                            <t hangText="non-canonical URI with fragment relative to root.json">
+                                https://example.com/root.json#/$defs/B
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="#/$defs/B/$defs/X">
+                        <list style="hanging">
+                            <t hangText="base URI">https://example.com/other.json</t>
+                            <t hangText="canonical URI with plain fragment">
+                                https://example.com/other.json#bar
+                            </t>
+                            <t hangText="canonical URI with pointer fragment">
+                                https://example.com/other.json#/$defs/X
+                            </t>
+                            <t hangText="non-canonical URI with fragment relative to root.json">
+                                https://example.com/root.json#/$defs/B/$defs/X
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="#/$defs/B/$defs/Y">
+                        <list style="hanging">
+                            <t hangText="base URI">https://example.com/t/inner.json</t>
+                            <t hangText="canonical URI with plain fragment">
+                                https://example.com/t/inner.json#bar
+                            </t>
+                            <t hangText="canonical URI with pointer fragment">
+                                https://example.com/t/inner.json#
+                            </t>
+                            <t hangText="non-canonical URI with fragment relative to other.json">
+                                https://example.com/other.json#/$defs/Y
+                            </t>
+                            <t hangText="non-canonical URI with fragment relative to root.json">
+                                https://example.com/root.json#/$defs/B/$defs/Y
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="#/$defs/C">
+                        <list style="hanging">
+                            <t hangText="base URI">
+                                urn:uuid:ee564b8a-7a87-4125-8c96-e9f123d6766f
+                            </t>
+                            <t hangText="canonical URI with pointer fragment">
+                                urn:uuid:ee564b8a-7a87-4125-8c96-e9f123d6766f#
+                            </t>
+                            <t hangText="non-canonical URI with fragment relative to root.json">
+                                https://example.com/root.json#/$defs/C
+                            </t>
+                        </list>
+                    </t>
+                </list>
+            </t>
+        </section>
+
+        <section title="Manipulating schema documents and references">
+            <t>
+                已经创建了各种工具来根据引用(“$ref”)的出现方式和位置重新排列模式文档。
+                这个附录讨论了哪些用例和操作符合这个规范。
+            </t>
+            <section title="Bundling schema resources into a single document">
+                <t>
+                    一组计划在一起使用的模式资源可以在各自的模式文档中进行组织，
+                    所有这些资源都在相同的模式文档中，或者在它们之间的文档分组的任何粒度中进行组织。
+                </t>
+                <t>
+                    存在许多工具来执行各种引用删除。一种常见的情况是生成一个文件，其中所有引用都可以在该文件中解析。
+                    这样做通常是为了简化分发，或者简化编码，这样对JSON模式库的各种调用就不必跟踪和加载大量资源。
+                </t>
+                <t>
+                    只要所有的静态引用(例如，静态引用)都可以安全地、可逆地完成这个转换。
+                    ("$ref")使用解析到规范uri的uri引用，所有模式资源的根模式中都有一个绝对uri作为"$id"。
+                </t>
+                <t>
+                    有了这些条件，就可以在“$defs”下复制每个外部资源，而不会破坏资源的模式对象之间的任何引用，
+                    也不会改变验证或注释结果的任何方面。
+                    “$defs”下模式的名称不影响行为，假设它们每个都是惟一的，因为它们不会出现在嵌入式资源的规范uri中。
+                </t>
+            </section>
+            <section title="删除引用并不总是安全的">
+                <t>
+                    在所有情况下，试图删除所有引用并生成一个模式文档并不会生成与原始表单行为相同的模式。
+                </t>
+                <t>
+                    由于“$ref”现在与任何其他关键字一样被处理，并且在相同的模式对象中允许使用其他关键字，
+                    因此在所有情况下完全支持非递归的“$ref”删除可能需要相对复杂的模式操作。
+                    确定或提供一组安全的“$ref”删除转换超出了此规范的范围，
+                    因为它们不仅依赖于模式结构，而且还依赖于预期的用法。
+                </t>
+            </section>
+        </section>
+
+        <section title="递归模式扩展的例子" anchor="recursive-example">
+            <figure>
+                <preamble>
+                    考虑下面两个描述简单递归树结构的模式，其中树中的每个节点都可以有任意类型的“data”字段。
+                    第一个模式允许并忽略其他实例属性。
+                    第二种更严格，只允许“data”和“children”属性。还显示了一个将“data”拼错为“daat”的示例实例。
+                </preamble>
+                <artwork>
+                    <![CDATA[
+// tree schema, extensible
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "https://example.com/tree",
+    "$recursiveAnchor": true,
+
+    "type": "object",
+    "properties": {
+        "data": true,
+        "children": {
+            "type": "array",
+            "items": {
+                "$recursiveRef": "#"
+            }
+        }
+    }
+}
+
+// strict-tree schema, guards against misspelled properties
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "https://example.com/strict-tree",
+    "$recursiveAnchor": true,
+
+    "$ref": "tree",
+    "unevaluatedProperties": false
+}
+
+// instance with misspelled field
+{
+    "children": [ { "daat": 1 } ]
+}
+]]>
+                </artwork>
+            </figure>
+            <t>
+                If we apply the "strict-tree" schema to the instance, we will follow
+                the "$ref" to the "tree" schema, examine its "children" subschema,
+                and find the "$recursiveAnchor" in its "items" subschema.
+                At this point, the dynamic path is
+                "#/$ref/properties/children/items/$recursiveRef".
+            </t>
+            <t>
+                The base URI at this point is "https://example.com/tree", so the
+                "$recursiveRef" initially resolves to "https://example.com/tree#".
+                Since "$recursiveAnchor" is true, we examine the dynamic path to
+                see if there is a different base URI to use. We find
+                "$recursiveAnchor" with a true value at the dynamic paths of
+                "#" and "#/$ref".
+            </t>
+            <t>
+                The outermost is "#", which is the root schema of the "strict-tree"
+                schema, so we use its base URI of "https://example.com/strict-tree",
+                which produces a final resolved URI of
+                "https://example.com/strict-tree#" for the "$recursiveRef".
+            </t>
+            <t>
+                This way, the recursion in the "tree" schema recurses to the root
+                of "strict-tree", instead of only applying "strict-tree" to the
+                instance root, but applying "tree" to instance children.
+            </t>
+        </section>
+
+        <section title="Working with vocabularies">
+            <section title="Best practices for vocabulary and meta-schema authors">
+                <t>
+                    Vocabulary authors should
+                    take care to avoid keyword name collisions if the vocabulary is intended
+                    for broad use, and potentially combined with other vocabularies. JSON
+                    Schema does not provide any formal namespacing system, but also does
+                    not constrain keyword names, allowing for any number of namespacing
+                    approaches.
+                </t>
+                <t>
+                    Vocabularies may build on each other, such as by defining the behavior
+                    of their keywords with respect to the behavior of keywords from another
+                    vocabulary, or by using a keyword from another vocabulary with
+                    a restricted or expanded set of acceptable values. Not all such
+                    vocabulary re-use will result in a new vocabulary that is compatible
+                    with the vocabulary on which it is built. Vocabulary authors should
+                    clearly document what level of compatibility, if any, is expected.
+                </t>
+                <t>
+                    Meta-schema authors should not use "$vocabulary" to combine multiple
+                    vocabularies that define conflicting syntax or semantics for the same
+                    keyword. As semantic conflicts are not generally detectable through
+                    schema validation, implementations are not expected to detect such
+                    conflicts. If conflicting vocabularies are declared, the resulting
+                    behavior is undefined.
+                </t>
+                <t>
+                    词汇表作者应该自己提供一个元模式来验证词汇表关键字的预期用法。
+                    这样的元模式不应该禁止额外的关键字，也不应该禁止核心词汇表中的任何关键字。
+                </t>
+                <t>
+                    建议元模式作者使用<xref target="allOf">"allOf"</xref>关键字引用每个词汇表的元模式，
+                    尽管构建元模式的其他机制可能适合某些用例。
+                </t>
+                <t>
+                    元模式的递归特性使得“$recursiveAnchor”和“$recursiveRef”关键字对于扩展现有的元模式特别有用，
+                    正如可以在扩展验证元模式的JSON超模式元模式中看到的那样。
+                </t>
+                <t>
+                    除了与声明的词汇表相关联的元模式所描述的之外，元模式可能会附加一些约束，包括描述任何词汇表中不存在的关键字。
+                    这允许将使用限制到词汇表的一个子集，并验证本地定义的不打算重用的关键字。
+                </t>
+                <t>
+                    但是，元模式不应该与它们声明的任何词汇表相冲突，比如需要不同于词汇表所期望的JSON类型。
+                    结果的行为是未定义的。
+                </t>
+                <t>
+                    本地使用的元模式不需要测试任意实现中的词汇表支持，完全可以安全地忽略“$vocabulary”。
+                </t>
+            </section>
+
+            <section title="带有词汇表声明的元模式示例"
+                     anchor="example-meta-schema">
+                <t>
+                    这个元模式显式地声明了核心词汇表和Applicator词汇表，以及一个扩展词汇表，并将它们的元模式与一个“allOf”组合起来。
+                    扩展词汇表的元模式(只描述该词汇表中的关键字)显示在主示例元模式之后。
+                </t>
+                <t>
+                    主要的示例元模式还通过禁止前缀为“un”的关键字来限制Applicator词汇表的使用，这些关键字实现起来特别复杂。
+                    这不会改变由Applicator词汇表定义的语义或关键字集。
+                    它只是确保使用这个元模式的模式，如果试图使用前缀为“unevaluted”的关键字，将无法对这个元模式进行验证。
+                </t>
+                <t>
+                    最后，这个元模式描述了一个关键字“localKeyword”的语法，它不属于任何词汇表。
+                    这个元模式的实现者和用户可能会理解“localKeyword”的语义。
+                    JSON模式没有定义任何在词汇表之外表达关键字语义的机制，因此除了在理解它们的特定环境之外，不适合使用它们。
+                </t>
+                <figure>
+                    <preamble>
+                        这个元模式组合了几个通用的词汇表。
+                    </preamble>
+                    <artwork>
+                        <![CDATA[
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://example.com/meta/general-use-example",
+  "$recursiveAnchor": true,
+  "$vocabulary": {
+    "https://json-schema.org/draft/2019-09/vocab/core": true,
+    "https://json-schema.org/draft/2019-09/vocab/applicator": true,
+    "https://json-schema.org/draft/2019-09/vocab/validation": true,
+    "https://example.com/vocab/example-vocab": true
+  },
+  "allOf": [
+    {"$ref": "https://json-schema.org/draft/2019-09/meta/core"},
+    {"$ref": "https://json-schema.org/draft/2019-09/meta/applicator"},
+    {"$ref": "https://json-schema.org/draft/2019-09/meta/validation"},
+    {"$ref": "https://example.com/meta/example-vocab",
+  ],
+  "patternProperties": {
+    "^unevaluated.*$": false
+  },
+  "properties": {
+    "localKeyword": {
+      "$comment": "Not in vocabulary, but validated if used",
+      "type": "string"
+    }
+  }
+}
+]]>
+                    </artwork>
+                </figure>
+                <figure>
+                    <preamble>
+                        这个元模式只描述了一个扩展词汇表。
+                    </preamble>
+                    <artwork>
+                        <![CDATA[
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://example.com/meta/example-vocab",
+  "$recursiveAnchor": true,
+  "$vocabulary": {
+    "https://example.com/vocab/example-vocab": true,
+  },
+  "type": ["object", "boolean"],
+  "properties": {
+    "minDate": {
+      "type": "string",
+      "pattern": "\d\d\d\d-\d\d-\d\d",
+      "format": "date",
+    }
+  }
+}
+]]>
+                    </artwork>
+                </figure>
+                <t>
+                    如上所示，即使通用的元模式的“allOf”中引用的每个单词汇表元模式都声明了相应的词汇表，
+                    这个新的元模式也必须重新声明它们。
+                </t>
+                <t>
+                    标准的元模式组合了核心和验证规范定义的所有词汇表，并组合了这些规范以及超模式规范定义的所有词汇表，
+                    展示了额外的复杂组合。这些元模式的uri可以分别在验证和超模式规范中找到。
+                </t>
+                <t>
+                    虽然通用的元模式可以验证“minDate”的语法，但是词汇表定义了“minDate”语义背后的逻辑。
+                    如果不了解语义(在本例中，实例值必须等于或位于模式中作为关键字值提供的日期之后)，则实现只能验证语法用法。
+                    在本例中，这意味着验证它是一个日期格式的字符串(使用“pattern”确保即使“format”纯粹作为注释时也能验证它，
+                    正如<xref target="json-schema-validation">验证规范</xref>中所解释的那样。
+                </t>
+            </section>
+        </section>
+
+        <section title="References and generative use cases">
+            <t>
+                虽然引用的存在对验证结果是透明的，但生成用例(如代码生成器和UI呈现器)通常认为引用在语义上是重要的。
+            </t>
+            <t>
+                要使这种特定于用例的语义显式化，最佳实践是创建一个annotation关键字，
+                用于与引用关键字(如“$ref”)一起使用相同的模式对象。
+            </t>
+            <figure>
+                <preamble>
+                    例如，这里有一个假设的关键字，用于确定代码生成器是否应该将引用目标视为不同的类，以及这些类之间的关系。
+                    请注意，此示例仅用于说明目的，并不打算提出函数式代码生成关键字。
+                </preamble>
+                <artwork>
+                    <![CDATA[
+{
+    "allOf": [
+        {
+            "classRelation": "is-a",
+            "$ref": "classes/base.json"
+        },
+        {
+            "$ref": "fields/common.json"
+        }
+    ],
+    "properties": {
+        "foo": {
+            "classRelation": "has-a",
+            "$ref": "classes/foo.json"
+        },
+        "date": {
+            "$ref": "types/dateStruct.json",
+        }
+    }
+}
+]]>
+                </artwork>
+            </figure>
+            <t>
+                这里，这个模式表示某种面向对象的类。
+                “allOf”中的第一个引用被标记为基类。
+                第二个没有分配类关系，这意味着代码生成器应该将目标的定义与这个定义结合起来，就好像没有涉及引用一样。
+            </t>
+            <t>
+                查看属性，“foo”被标记为对象组合，而“date”属性不是。
+                它只是一个带有子字段的字段，而不是一个不同类的实例。
+            </t>
+            <t>
+                这种用法要求注释与引用位于相同的对象中，必须将其识别为引用。
+            </t>
+        </section>
+
+        <section title="Acknowledgments">
+            <t>
+                Thanks to
+                Gary Court,
+                Francis Galiegue,
+                Kris Zyp,
+                and Geraint Luff
+                for their work on the initial drafts of JSON Schema.
+            </t>
+            <t>
+                Thanks to
+                Jason Desrosiers,
+                Daniel Perrett,
+                Erik Wilde,
+                Ben Hutton,
+                Evgeny Poberezkin,
+                Brad Bowman,
+                Gowry Sankar,
+                Donald Pipowitch,
+                and Dave Finlay
+                for their submissions and patches to the document.
+            </t>
+        </section>
+
+        <section title="ChangeLog">
+            <t>
+                <cref>This section to be removed before leaving Internet-Draft status.</cref>
+            </t>
+            <t>
+                <list style="hanging">
+                    <t hangText="draft-handrews-json-schema-02">
+                        <list style="symbols">
+                            <t>Update to RFC 8259 for JSON specification</t>
+                            <t>Moved "definitions" from the Validation specification here as "$defs"</t>
+                            <t>Moved applicator keywords from the Validation specification as their own vocabulary</t>
+                            <t>Moved the schema form of "dependencies" from the Validation specification as
+                                "dependentSchemas"
+                            </t>
+                            <t>Formalized annotation collection</t>
+                            <t>Specified recommended output formats</t>
+                            <t>Defined keyword interactions in terms of annotation and assertion results</t>
+                            <t>Added "unevaluatedProperties" and "unevaluatedItems"</t>
+                            <t>Define "$ref" behavior in terms of the assertion, applicator, and annotation model</t>
+                            <t>Allow keywords adjacent to "$ref"</t>
+                            <t>Note undefined behavior for "$ref" targets involving unknown keywords</t>
+                            <t>Add recursive referencing, primarily for meta-schema extension</t>
+                            <t>Add the concept of formal vocabularies, and how they can be recognized through
+                                meta-schemas
+                            </t>
+                            <t>Additional guidance on initial base URIs beyond network retrieval</t>
+                            <t>Allow "schema" media type parameter for "application/schema+json"</t>
+                            <t>Better explanation of media type parameters and the HTTP Accept header</t>
+                            <t>Use "$id" to establish canonical and base absolute-URIs only, no fragments</t>
+                            <t>Replace plain-name-fragment-only form of "$id" with "$anchor"</t>
+                            <t>Clarified that the behavior of JSON Pointers across "$id" boundary is unreliable</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-handrews-json-schema-01">
+                        <list style="symbols">
+                            <t>This draft is purely a clarification with no functional changes</t>
+                            <t>Emphasized annotations as a primary usage of JSON Schema</t>
+                            <t>Clarified $id by use cases</t>
+                            <t>Exhaustive schema identification examples</t>
+                            <t>Replaced "external referencing" with how and when an implementation might know of a
+                                schema from another document
+                            </t>
+                            <t>Replaced "internal referencing" with how an implementation should recognized schema
+                                identifiers during parsing
+                            </t>
+                            <t>Dereferencing the former "internal" or "external" references is always the same process
+                            </t>
+                            <t>Minor formatting improvements</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-handrews-json-schema-00">
+                        <list style="symbols">
+                            <t>Make the concept of a schema keyword vocabulary more clear</t>
+                            <t>Note that the concept of "integer" is from a vocabulary, not the data model</t>
+                            <t>Classify keywords as assertions or annotations and describe their general behavior</t>
+                            <t>Explain the boolean schemas in terms of generalized assertions</t>
+                            <t>Reserve "$comment" for non-user-visible notes about the schema</t>
+                            <t>Wording improvements around "$id" and fragments</t>
+                            <t>Note the challenges of extending meta-schemas with recursive references</t>
+                            <t>Add "application/schema-instance+json" media type</t>
+                            <t>Recommend a "schema" link relation / parameter instead of "profile"</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-wright-json-schema-01">
+                        <list style="symbols">
+                            <t>Updated intro</t>
+                            <t>Allowed for any schema to be a boolean</t>
+                            <t>"$schema" SHOULD NOT appear in subschemas, although that may change</t>
+                            <t>Changed "id" to "$id"; all core keywords prefixed with "$"</t>
+                            <t>Clarify and formalize fragments for application/schema+json</t>
+                            <t>Note applicability to formats such as CBOR that can be represented in the JSON data
+                                model
+                            </t>
+                        </list>
+                    </t>
+                    <t hangText="draft-wright-json-schema-00">
+                        <list style="symbols">
+                            <t>Updated references to JSON</t>
+                            <t>Updated references to HTTP</t>
+                            <t>Updated references to JSON Pointer</t>
+                            <t>Behavior for "id" is now specified in terms of RFC3986</t>
+                            <t>Aligned vocabulary usage for URIs with RFC3986</t>
+                            <t>Removed reference to draft-pbryan-zyp-json-ref-03</t>
+                            <t>Limited use of "$ref" to wherever a schema is expected</t>
+                            <t>Added definition of the "JSON Schema data model"</t>
+                            <t>Added additional security considerations</t>
+                            <t>Defined use of subschema identifiers for "id"</t>
+                            <t>Rewrote section on usage with HTTP</t>
+                            <t>Rewrote section on usage with rel="describedBy" and rel="profile"</t>
+                            <t>Fixed numerous invalid examples</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-zyp-json-schema-04">
+                        <list style="symbols">
+                            <t>Salvaged from draft v3.</t>
+                            <t>Split validation keywords into separate document.</t>
+                            <t>Split hypermedia keywords into separate document.</t>
+                            <t>Initial post-split draft.</t>
+                            <t>Mandate the use of JSON Reference, JSON Pointer.</t>
+                            <t>Define the role of "id". Define URI resolution scope.</t>
+                            <t>Add interoperability considerations.</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-zyp-json-schema-00">
+                        <list style="symbols">
+                            <t>Initial draft.</t>
+                        </list>
+                    </t>
+                </list>
+            </t>
+        </section>
+    </back>
+</rfc>

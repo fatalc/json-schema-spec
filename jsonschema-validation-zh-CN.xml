@@ -1,0 +1,1274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC1123 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1123.xml">
+<!ENTITY RFC2045 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2045.xml">
+<!ENTITY RFC2046 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2046.xml">
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2673 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2673.xml">
+<!ENTITY RFC3339 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3339.xml">
+<!ENTITY RFC3986 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3986.xml">
+<!ENTITY RFC3987 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3987.xml">
+<!ENTITY RFC4122 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4122.xml">
+<!ENTITY RFC4291 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4291.xml">
+<!ENTITY RFC4329 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4329.xml">
+<!ENTITY RFC4648 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4648.xml">
+<!ENTITY RFC5321 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5321.xml">
+<!ENTITY RFC5890 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5890.xml">
+<!ENTITY RFC5891 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5891.xml">
+<!ENTITY RFC6531 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6531.xml">
+<!ENTITY RFC6570 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6570.xml">
+<!ENTITY RFC6901 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6901.xml">
+<!ENTITY RFC8259 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8259.xml">
+]>
+<?rfc toc="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<?rfc strict="no"?>
+<?rfc rfcedstyle="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes" ?>
+<rfc category="info" docName="draft-handrews-json-schema-validation-02" ipr="trust200902">
+    <front>
+        <title abbrev="JSON Schema Validation">
+            JSON Schema Validation: A Vocabulary for Structural Validation of JSON
+        </title>
+
+        <author fullname="Austin Wright" initials="A" surname="Wright" role="editor">
+            <address>
+                <email>aaa@bzfx.net</email>
+            </address>
+        </author>
+
+        <author fullname="Henry Andrews" initials="H" surname="Andrews" role="editor">
+            <address>
+                <email>andrews_henry@yahoo.com</email>
+            </address>
+        </author>
+
+        <author fullname="Ben Hutton" initials="B" surname="Hutton" role="editor">
+            <organization>Wellcome Sanger Institute</organization>
+            <address>
+                <email>bh7@sanger.ac.uk</email>
+                <uri>https://jsonschema.dev</uri>
+            </address>
+        </author>
+
+        <date year="2020"/>
+        <workgroup>Internet Engineering Task Force</workgroup>
+        <keyword>JSON</keyword>
+        <keyword>Schema</keyword>
+        <keyword>validation</keyword>
+
+        <abstract>
+            <t>
+                JSON模式(application/schema+json)有几个用途，其中一个是JSON实例验证。
+                该文档为JSON模式指定了一个词汇表，用于描述JSON文档的含义，
+                为使用JSON数据的用户界面提供提示，并对有效文档的外观进行断言。
+            </t>
+        </abstract>
+
+        <note title="读者注意">
+            <t>
+                本草案的问题清单载于
+                <eref target="https://github.com/json-schema-org/json-schema-spec/issues"/>.
+            </t>
+            <t>
+                有关其他信息，请参见 <eref target="https://json-schema.org/"/>.
+            </t>
+            <t>
+                要提供反馈，请使用此问题跟踪器、主页上列出的通信方法，或向文档编辑发送电子邮件。
+            </t>
+        </note>
+    </front>
+
+    <middle>
+        <section title="介绍">
+            <t>
+                JSON模式可用于要求给定的JSON文档(实例)满足一定数量的条件。
+                这些标准是通过使用本规范中描述的关键字来断言的。
+                此外，还定义了一组关键字来辅助交互式用户界面实例生成。
+            </t>
+            <t>
+                该规范将使用<xref target="json-schema">JSON Schema core</xref>规范定义的概念、语法和术语。
+            </t>
+        </section>
+
+        <section title="约定和术语">
+            <t>
+                <!-- The text in this section has been copied from the official boilerplate,
+                and should not be modified.-->
+
+                关键字 "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+                "SHOULD NOT", "RECOMMENDED", "MAY", 和 "OPTIONAL" 本文件将按下列方式解释<xref target="RFC2119">RFC 2119</xref>.
+            </t>
+            <t>
+                该规范使用术语“container instance”来指代数组和对象实例。它使用术语“children instances”来引用数组元素或对象成员值。
+            </t>
+            <t>
+                如果数组中没有两个元素<xref target="json-schema">相同</xref>，则数组值中的元素被认为是唯一的。
+            </t>
+        </section>
+
+        <section title="概述">
+            <t>
+                JSON模式验证断言实例数据结构上的约束。
+                然后，使用包含非断言信息(如描述性元数据和使用提示)的任何关键字对满足所有断言约束的实例位置进行注释。
+                如果实例中的所有位置都满足所有断言的约束，则该实例对模式有效。
+            </t>
+            <t>
+                每个模式对象针对其应用到的每个实例位置进行独立计算。
+                通过确保验证器不需要跨文档范围的验证过程维护状态，这极大地简化了验证器的实现需求。
+            </t>
+            <t>
+                该规范定义了一组断言关键字，以及一个小的元数据关键字词汇表，可用于用有用的信息注释JSON实例。
+                <xref target="format" />关键字主要用作注释，但也可以用作断言。
+                <xref target="content" />关键字是处理嵌入为JSON字符串的文档的注释。
+            </t>
+        </section>
+
+        <section title="互操作性的考虑">
+
+            <section title="字符串实例的验证">
+                <t>
+                    应该注意，nul字符(\u0000)在JSON字符串中是有效的。
+                    要验证的实例可能包含具有此字符的字符串值，而不管底层编程语言是否有能力处理此类数据。
+                </t>
+            </section>
+
+            <section title="数值实例的验证">
+                <t>
+                    JSON规范允许任意精度的数字，而JSON模式不添加任何此类界限。
+                    这意味着JSON模式处理的数字实例可以是任意大的和/或具有任意长的小数部分，
+                    而不管底层编程语言处理这些数据的能力如何。
+                </t>
+            </section>
+
+            <section title="正则表达式" anchor="regexInterop">
+                <t>
+                    使用正则表达式的关键字，或将实例值约束为正则表达式的关键字，
+                    都受到<xref target="json-schema">JSON Schema Core</xref>规范中正则表达式的互操作性考虑的影响。
+                </t>
+            </section>
+
+        </section>
+
+        <section title="Meta-Schema" anchor="meta-schema">
+            <t>
+                默认JSON模式元模式的当前URI是<eref target="http://json-schema.org/draft/2019-09/schema"/>。
+                为了方便模式作者，这个元模式描述了在这个规范和JSON模式核心规范中定义的所有词汇，
+                以及为过渡时期保留的两个以前的关键字。
+                下面为每个部分提供了单独的词汇表和词汇表元模式uri。某些词汇表是可选的，可在相关部分中详细解释。
+            </t>
+            <t>
+                为了纠正错误，可以在规范草案之间发布更新的词汇表和元模式uri。
+                实现应该考虑在这个规范草案之后和下一个规范草案之前的uri日期，以指示与这里列出的相同的语法和语义。
+            </t>
+        </section>
+
+        <section title="用于结构验证的词汇表">
+            <t>
+                模式中的验证关键字要求成功地验证实例。这些关键字都是没有任何注释行为的断言。
+            </t>
+            <t>
+                不使用“$vocabulary”的元模式应该被认为需要这个词汇表，就好像它的URI的值为true一样。
+            </t>
+            <t>
+                这个词汇表的当前URI(称为验证词汇表)是:
+                <eref target="https://json-schema.org/draft/2019-09/vocab/validation"/>.
+            </t>
+            <t>
+                对应的元模式的当前URI是:
+                <eref target="https://json-schema.org/draft/2019-09/meta/validation"/>.
+            </t>
+
+            <section title="验证任何实例类型的关键字" anchor="general">
+                <section title="type">
+                    <t>
+                        此关键字的值必须是字符串或数组。如果它是一个数组，那么数组的元素必须是字符串，并且必须是惟一的。
+                    </t>
+                    <t>
+                        字符串值必须是六种基本类型中的一种(“null”、“boolean”、“object”、“array”、“number”或“String”)，
+                        或与零小数部分匹配的任何数字的“integer”。
+                    </t>
+                    <t>
+                        当且仅当实例位于为此关键字列出的任何集合中时，实例才会验证。
+                    </t>
+                </section>
+
+                <section title="enum" anchor="enum">
+                    <t>
+                        这个关键字的值必须是一个数组。这个数组应该至少有一个元素。数组中的元素应该是唯一的。
+                    </t>
+                    <t>
+                        如果该关键字的值等于该关键字的数组值中的一个元素，则实例将成功地对该关键字进行验证。
+                    </t>
+                    <t>
+                       数组中的元素可以是任何类型，包括null。
+                    </t>
+                </section>
+
+                <section title="const">
+                    <t>
+                        这个关键字的值可以是任何类型，包括null。
+                    </t>
+                    <t>
+                        使用这个关键字在功能上等同于使用单个值<xref target="enum">"enum"</xref>。
+                    </t>
+                    <t>
+                        如果该关键字的值等于该关键字的值，则实例将成功地对该关键字进行验证。
+                    </t>
+                </section>
+            </section>
+
+            <section title="数字实例验证关键字(number和integer)"
+                     anchor="numeric">
+                <section title="multipleOf">
+                    <t>
+                        “multipleOf”的值必须是一个严格大于0的数字。
+                    </t>
+                    <t>
+                        数字实例只有在通过该关键字的值进行除法得到整数时才有效。
+                    </t>
+                </section>
+
+                <section title="maximum">
+                    <t>
+                        “maximum”的值必须是一个数字，表示一个数字实例的包含上限。
+                    </t>
+                    <t>
+                        如果实例是一个数字，那么这个关键字仅在实例小于或正好等于“maximum”时才有效。
+                    </t>
+                </section>
+
+                <section title="exclusiveMaximum">
+                    <t>
+                        “exclusive vemaximum”的值必须是number，表示一个数字实例的独占上限。
+                    </t>
+                    <t>
+                        如果实例是一个数字，那么只有当它的值严格小于(不等于)时，该实例才是有效的“exclusiveMaximum”。
+                    </t>
+                </section>
+
+                <section title="minimum">
+                    <t>
+                       “minimum”的值必须是一个数字，表示数字实例的包含的下限。
+                    </t>
+                    <t>
+                        如果实例是一个数字，那么这个关键字仅在实例大于或恰好等于“minimum”时才有效。
+                    </t>
+                </section>
+
+                <section title="exclusiveMinimum">
+                    <t>
+                        “exclusive veminimum”的值必须是number，表示数字实例的独占下限。
+                    </t>
+                    <t>
+                        如果实例是一个数字，那么该实例只有在其值严格大于(不等于)时才有效“exclusiveMinimum”。
+                    </t>
+                </section>
+            </section>
+
+            <section title="字符串验证关键字" anchor="string">
+                <section title="maxLength">
+                    <t>
+                        此关键字的值必须是非负整数.</t>
+                    <t>
+                        如果字符串实例的长度小于或等于此关键字的值，则该实例对该关键字有效。
+                    </t>
+                    <t>
+                        字符串实例的长度定义为<xref target="RFC8259">RFC 8259</xref>所定义的字符数。
+                    </t>
+                </section>
+
+                <section title="minLength">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果字符串实例的长度大于或等于该关键字的值，则该实例对该关键字有效。
+                    </t>
+
+                    <t>
+                        字符串实例的长度定义为<xref target="RFC8259">RFC 8259</xref>所定义的字符数。
+                    </t>
+                    <t>
+                        省略此关键字的行为与值0相同。
+                    </t>
+                </section>
+
+                <section title="pattern" anchor="pattern">
+                    <t>
+                        此关键字的值必须是字符串。根据ECMA 262正则表达式方言，这个字符串应该是一个有效的正则表达式。
+                    </t>
+                    <t>
+                        如果正则表达式成功匹配实例，则认为字符串实例是有效的。注意:正则表达式不是隐式锚定的。
+                    </t>
+                </section>
+            </section>
+
+            <section title="数组验证关键字">
+
+                <section title="maxItems">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果数组实例的大小小于或等于此关键字的值，则数组实例对“maxItems”有效。
+                    </t>
+                </section>
+
+                <section title="minItems">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果数组实例的大小大于或等于这个关键字的值，则它对“minItems”有效。
+                    </t>
+                    <t>
+                       省略此关键字的行为与值0相同。
+                    </t>
+                </section>
+
+                <section title="uniqueItems">
+                    <t>
+                        此关键字的值必须为布尔值。
+                    </t>
+                    <t>
+                        如果此关键字的布尔值为false，则实例验证成功。如果它的布尔值为true，则如果它的所有元素都是惟一的，则实例将成功验证。
+                    </t>
+                    <t>
+                        省略此关键字的行为与false值相同。
+                    </t>
+                </section>
+
+                <section title="maxContains">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果对<xref target="json-schema">"contains"</xref>模式有效的元素数小于或等于此关键字的值，则数组实例对"maxContains"有效。
+                    </t>
+                    <t>
+                        如果在同一个模式对象中不存在“contains”，则此关键字没有效果。
+                    </t>
+                </section>
+
+                <section title="minContains">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果对<xref target="json-schema">"contains"</xref>模式有效的元素数大于或等于该关键字的值，
+                        则数组实例对"minContains"有效。
+                    </t>
+                    <t>
+                        值0是允许的，但是只有在设置从0到“maxContains”的范围时才有用。
+                        如果值为0，且没有“maxContains”，则导致“contains”总是通过验证。
+                    </t>
+                    <t>
+                        如果在同一个模式对象中不存在“contains”，则此关键字没有效果。
+                    </t>
+                    <t>
+                        省略此关键字的行为与值1相同。
+                    </t>
+                </section>
+            </section>
+
+            <section title="对象验证关键字">
+                <section title="maxProperties">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                       如果对象实例的属性数小于或等于此关键字的值，则该对象实例对“maxProperties”有效。
+                    </t>
+                </section>
+
+                <section title="minProperties">
+                    <t>
+                        此关键字的值必须是非负整数。
+                    </t>
+                    <t>
+                        如果对象实例的属性数大于或等于此关键字的值，则该对象实例对“minProperties”有效。
+                    </t>
+                    <t>
+                        省略此关键字的行为与值0相同。
+                    </t>
+                </section>
+
+                <section title="required">
+                    <t>
+                        这个关键字的值必须是一个数组。这个数组的元素(如果有的话)必须是字符串，并且必须是唯一的。
+                    </t>
+                    <t>
+                        如果数组中的每个项都是实例中的属性名，则对象实例对该关键字有效。
+                    </t>
+                    <t>
+                        省略此关键字与空数组具有相同的行为。
+                    </t>
+                </section>
+
+                <section title="dependentRequired">
+                    <t>
+                        这个关键字的值必须是一个对象。这个对象中的属性(如果有的话)必须是数组。
+                        每个数组中的元素(如果有的话)必须是字符串，并且必须是惟一的。
+                    </t>
+                    <t>
+                        此关键字指定如果存在特定的其他属性，则需要的属性。他们的要求取决于其他财产的存在。
+                    </t>
+                    <t>
+                       对于同时出现在实例和作为该关键字值中的名称的每个名称，
+                        如果相应数组中的每个项也是实例中的属性名，则验证成功。
+                    </t>
+                    <t>
+                        省略此关键字与空对象具有相同的行为。
+                    </t>
+                </section>
+            </section>
+        </section>
+
+        <section title='具有“format”的语义内容的词汇表' anchor="format">
+
+            <section title="前言">
+                <t>
+                    仅进行结构验证可能不足以使应用程序正确地利用某些值。
+                    定义“format”annotation关键字是为了允许模式作者为固定的值子集传递语义信息，
+                    这些值由权威资源(无论是rfc还是其他外部规范)准确地描述。
+                </t>
+
+                <t>
+                    实现可以将“format”作为注释之外的一个断言，并尝试验证值是否符合指定的语义。有关详细信息，请参阅下面的实现需求。
+                </t>
+
+                <t>
+                    此关键字的值称为格式属性。它一定是一根弦。
+                    格式属性通常只能验证给定的一组实例类型。
+                    如果要验证的实例的类型不在此集合中，则此格式属性和实例的验证应该成功。
+                    本节中定义的所有格式属性都适用于字符串，
+                    但是可以指定格式属性来应用于<xref target="json-schema ">core JSON Schema</xref>
+                    中定义的数据模型中定义的任何实例类型
+                    <cref>
+                        请注意，该规范中的“type”关键字定义了一个“integer”类型，它不是数据模型的一部分。
+                        因此，format属性可以限制为数字，但不能专门限制为整数。
+                        但是，数值格式可以与值为“integer”的“type”关键字一起使用，
+                        或者可以显式地定义为总是传递(如果数字不是整数)，这将产生本质上与只应用于整数相同的行为。
+                    </cref>
+                </t>
+
+                <t>
+                    不使用“$vocabulary”的元模式应该考虑使用这个词汇表，就好像它的URI的值为false一样。有关详细信息，请参阅下面的实现需求。
+                </t>
+                <t>
+                    这个词汇表的当前URI(即格式词汇表)是:
+                    <eref target="https://json-schema.org/draft/2019-09/vocab/format"/>.
+                </t>
+                <t>
+                    对应的元模式的当前URI是:
+                    <eref target="https://json-schema.org/draft/2019-09/meta/format"/>.
+                </t>
+
+            </section>
+
+            <section title="实现需求">
+                <t>
+                    “format”关键字的作用是作为注释，也可以作为断言。
+                    <cref>这是由于关键字的历史，不符合当前的关键字设计原则。</cref>
+                    为了处理这种歧义，“format”关键字被定义在它自己的独立词汇表中，
+                    如上所述。词汇表声明的真或假值控制处理使用“格式”的模式所需的实现需求，以及模式作者可以依赖的行为。
+                </t>
+
+                <section title="作为一个注释">
+                    <t>
+                        如果实现支持注释收集，则必须将format的值收集为注释。当模式验证不可用或不充分时，这将启用应用程序级验证。
+                    </t>
+                    <t>
+                        这个需求不受词汇表声明的布尔值的影响，也不受下一节中描述的“format”断言行为的配置的影响。
+                        <cref>
+                            即使在词汇表声明为false时也需要注释收集是不典型的，
+                            但这对于确保即使在没有实现断言求值时也能够执行应用程序级验证的最佳实践是必要的。
+                            因为“format”一直是该规范的一部分，
+                            所以即使使用了错误的词汇表声明，要求实现也要意识到这一点，这被认为不是一个负担。
+                        </cref>
+                    </t>
+                </section>
+
+                <section title="作为一个断言">
+                    <t>
+                        不管词汇表声明的布尔值如何，可以将“format”作为断言求值的实现必须提供启用和禁用此类求值的选项。
+                        未显式指定选项时的断言求值行为取决于词汇表声明的布尔值。
+                    </t>
+
+                    <t>
+                        在实现整个规范时，必须用false(但请参阅下面的详细信息)来支持这个词汇表，
+                        也可以用true来支持它。
+                    </t>
+
+                    <t>
+                        如果词汇表的值为false，则实现为:
+                        <list>
+                            <t>
+                                除非显式地将“format”配置为断言，否则一定不能将其计算为断言吗;
+                            </t>
+                            <t>
+                                应该为下面定义的每个格式属性提供特定于实现的最佳效果验证;
+                            </t>
+                            <t>
+                                可以选择实现任何或所有格式属性的验证为no-op，始终生成一个true验证结果;
+                            </t>
+                            <t>
+                                应记录其对验证的支持程度。
+                            </t>
+                        </list>
+                        <cref>
+                            这与当前实现的实际情况相匹配，实现为某些或所有格式属性提供了广泛的不同级别的验证，包括根本不验证。
+                            它还鼓励只依赖注释行为并在应用程序中执行语义验证，这是推荐的最佳实践。
+                        </cref>
+                    </t>
+
+                    <t>
+                        当用true值声明词汇表时，支持这种形式的词汇表的实现是:
+                        <list>
+                            <t>
+                                必须将“格式”计算为断言，除非显式地将其配置为不这样做;
+                            </t>
+                            <t>
+                                必须为本规范中定义的所有格式属性以及它所识别的任何其他格式属性实现语法验证，
+                                以便存在可能验证失败的正确类型的实例值。
+                            </t>
+                        </list>
+                        由于格式属性的复杂性，对格式属性进行最小验证的要求是有意模糊和宽松的。
+                        特别注意，该要求仅限于语法检查;
+                        不期望实现会发送电子邮件、尝试连接到URL或以其他方式检查由格式实例标识的实体是否存在。
+                        <cref>
+                            预期对于简单的格式，例如日期-时间，语法验证将是彻底的。
+                            对于复杂的格式，如电子邮件地址，随着时间的推移，它是各种标准和无数调整的组合，以及模糊和/或过时的规则，
+                            这些规则可能受到或不受其他使用该值的应用程序的限制，一个最小的验证就足够了。
+                            例如，不包含“@”的实例字符串显然不是有效的电子邮件地址，
+                            而包含7位ASCII以外字符的“电子邮件”或“主机名”同样显然无效。
+                        </cref>
+                    </t>
+                    <t>
+                        建议实现对每种格式使用公共解析库，或者使用众所周知的正则表达式。
+                        实现应该清楚地记录验证每个格式属性的方式和程度。
+                    </t>
+                    <t>
+                        <xref target="meta-schema">标准核心和验证元模式</xref>在其"$vocabulary"关键字中包含了这个词汇表，
+                        其值为false，因为在默认情况下，实现不需要将这个关键字作为断言来支持。
+                        支持值为true的格式词汇表可以极大地增加代码大小，并在某些情况下增加执行时间，但这并不适用于所有实现。
+                    </t>
+                </section>
+                <section title="自定义格式属性">
+                    <t>
+                        实现可能支持自定义格式属性。
+                        除了各方之间的协议之外，模式作者不应期望对等实现支持这种自定义格式属性。
+                        实现不能因为未知的格式属性而导致验证失败或停止处理。
+                        当将“format”作为注释处理时，实现应该同时收集已知和未知的格式属性值。
+                    </t>
+                    <t>
+                        词汇表不支持专门为关键字声明不同的值集。
+                        由于这个限制，以及这个关键字在历史上的不均衡实现，如果需要互操作性，
+                        建议在自定义词汇表中定义额外的关键字，而不是额外的格式属性。
+                    </t>
+                </section>
+            </section>
+
+            <section title="定义的格式">
+
+                <section title="日期、时间和持续时间">
+                    <t>
+                        这些属性应用于字符串实例。
+                    </t>
+                    <t>
+                        日期和时间格式名称派生自
+                        <xref target="RFC3339">RFC 3339, section 5.6</xref>.
+                        持续时间格式来自ISO 8601 ABNF，如RFC 3339附录A所示。
+                    </t>
+                    <t>
+                        支持格式的实现应该支持以下属性:
+                        <list style="hanging">
+                            <t hangText="date-time:">
+                                如果根据“date-time”结果，字符串实例是有效的表示形式，那么它对该属性是有效的。
+                            </t>
+                            <t hangText="date:">
+                                根据“full-date”产品，如果字符串实例是有效的表示形式，那么它对该属性是有效的。
+                            </t>
+                            <t hangText="time:">
+                                如果一个字符串实例是根据“full-time”产品的有效表示，那么它对这个属性是有效的。
+                            </t>
+                            <t hangText="duration:">
+                                如果字符串实例是根据“duration”生产的有效表示，那么它对该属性是有效的。
+                            </t>
+                        </list>
+                    </t>
+                    <t>
+                        实现可以使用该部分中定义的其他产品名称支持其他属性。
+                        如果实现“full-date”或“full-time”，
+                        则必须实现相应的短格式(分别为“date”和“time”)， 并且必须具有相同的行为。
+                        实现不应该使用任何与RFC 3339产品匹配的名称来定义扩展属性，除非它根据该产品的规则进行验证。
+                        <cref>
+                            目前没有共识的需要支持所有RFC 3339格式,所以这种方法保留的名称空间将鼓励实验不提交整个集。
+                            格式实现需求将变得更加灵活,或这些可能会被提升到完全指定属性或下降。
+                        </cref>
+                    </t>
+                </section>
+
+                <section title="电子邮件地址">
+                    <t>
+                        这些属性应用于字符串实例。
+                    </t>
+                    <t>
+                        一个字符串实例对这些属性是有效的，如果它是一个有效的互联网电子邮件地址如下:
+                        <list style="hanging">
+                            <t hangText="email:">
+                                由<xref target="RFC5321">RFC 5321中的"Mailbox" ABNF规则定义，章节4.1.2</xref>。
+                            </t>
+                            <t hangText="idn-email:">
+                                正如<xref target="RFC6531">RFC 6531中扩展的"Mailbox" ABNF规则所定义的，3.3节</xref>。
+                            </t>
+                        </list>
+                        注意，所有对“email”属性有效的字符串对“idn-email”属性也有效。
+                    </t>
+                </section>
+                <section title="主机名">
+                    <t>
+                        这些属性应用于字符串实例。
+                    </t>
+                    <t>
+                        一个字符串实例对这些属性是有效的，如果它是一个有效的互联网主机名表示如下:
+                        <list style="hanging">
+                            <t hangText="hostname:">
+                                根据<xref target="RFC1123">RFC 1123定义，section 2.1</xref>，
+                                包括使用<xref target="RFC5891">RFC 5891中指定的Punycode算法生成的主机名，section 4.4</xref>。
+                            </t>
+                            <t hangText="idn-hostname:">
+                                由RFC 1123定义的主机名，或由
+                                <xref target="RFC5890">RFC 5890定义的国际化主机名，第2.3.2.3节</xref>.
+                            </t>
+                        </list>
+                        注意，所有对“hostname”属性有效的字符串对“idn-hostname”属性也有效。
+                    </t>
+                </section>
+
+                <section title="IP地址">
+                    <t>
+                        These attributes apply to string instances.
+                    </t>
+                    <t>
+                        A string instance is valid against these attributes if it is a valid
+                        representation of an IP address as follows:
+                        <list style="hanging">
+                            <t hangText="ipv4:">
+                                An IPv4 address according to the "dotted-quad" ABNF
+                                syntax as defined in
+                                <xref target="RFC2673">RFC 2673, section 3.2</xref>.
+                            </t>
+                            <t hangText="ipv6:">
+                                An IPv6 address as defined in
+                                <xref target="RFC4291">RFC 4291, section 2.2</xref>.
+                            </t>
+                        </list>
+                    </t>
+                </section>
+
+                <section title="资源标识符">
+                    <t>
+                        这些属性应用于字符串实例。
+                    </t>
+                    <t>
+                        <list style="hanging">
+                            <t hangText="uri:">
+                                根据<xref target="RFC3986"/>，如果一个字符串实例是一个有效的URI，那么它对这个属性是有效的。
+                            </t>
+                            <t hangText="uri-reference:">
+                                根据<xref target="RFC3986"/>，如果字符串实例是有效的URI引用(URI或相对引用)，
+                                那么它对这个属性是有效的。
+                            </t>
+                            <t hangText="iri:">
+                                根据<xref target="RFC3987"/>，如果一个字符串实例是有效的IRI，那么它对这个属性是有效的。
+                            </t>
+                            <t hangText="iri-reference:">
+                                根据<xref target="RFC3987"/>，如果字符串实例是有效的IRI引用(IRI或相对引用)，
+                                那么它对这个属性是有效的。
+                            </t>
+                            <t hangText="uuid:">
+                                根据<xref target="RFC4122"/>，如果字符串实例是UUID的有效字符串表示，那么它对这个属性是有效的。
+                            </t>
+                        </list>
+                    </t>
+                    <t>
+                        注意，所有有效的URI都是有效的IRIs，所有有效的URI引用也是有效的IRI引用。
+                    </t>
+                    <t>
+                        还要注意，“uuid”格式是针对普通uuid的， 而不是urn中的uuid。例如“f81d4fy -7dec-11d0-a765-00a0c91e6bf6”。
+                        对于作为URNs的uuid，使用“uri”格式和“模式”正则表达式“^urn:uuid:”来指示uri模式和urn名称空间。
+                    </t>
+                </section>
+
+                <section title="uri模板">
+                    <t>
+                        此属性应用于字符串实例。
+                    </t>
+                    <t>
+                        根据<xref target="RFC6570"/>，如果字符串实例是有效的URI模板(任何级别的)，那么它对这个属性都是有效的。
+                    </t>
+                    <t>
+                        请注意，可以为IRIs使用URI模板;没有单独的IRI模板规范。
+                    </t>
+                </section>
+
+                <section title="JSON Pointers">
+                    <t>
+                        这些属性应用于字符串实例。
+                    </t>
+                    <t>
+                        <list style="hanging">
+                            <t hangText="json-pointer:">
+                                根据<xref target="RFC6901">RFC 6901, section 5</xref>，
+                                一个字符串实例对这个属性是有效的，如果它是一个JSON指针的有效JSON字符串表示。
+                            </t>
+                            <t hangText="relative-json-pointer:">
+                                如果字符串实例是有效的<xref target="relative-json-pointer">Relative JSON Pointer</xref>
+                                则该字符串实例对该属性有效。
+                            </t>
+                        </list>
+                        为了同时支持绝对和相对JSON指针，可以使用“anyOf”或“oneOf”来表示对这两种格式的支持。
+                    </t>
+                </section>
+                <section title="regex">
+                    <t>
+                        此属性应用于字符串实例。
+                    </t>
+                    <t>
+                        一个正则表达式，根据<xref target="ecma262">ECMA 262</xref>正则表达式，它应该是有效的。
+                    </t>
+                    <t>
+                       验证格式的实现必须至少接受本规范<xref target="regexInterop">正则表达式</xref>部分中定义的ECMA 262的子集，
+                        并且应该接受所有有效的ECMA 262表达式。
+                    </t>
+                </section>
+            </section>
+        </section>
+
+        <section title='字符串编码数据内容的词汇表' anchor="content">
+
+            <section title="前言">
+                <t>
+                    本节中定义的注释表明一个实例包含JSON字符串中编码的非JSON数据。
+                </t>
+                <t>
+                    这些属性提供了将JSON数据解释为丰富的多媒体文档所需的附加信息。
+                    它们描述了内容的类型、编码方式和/或验证方式。
+                    它们不作为验证断言;格式不正确的字符串编码文档不能使包含它的实例被认为是无效的。
+                </t>
+                <t>
+                    不使用“$vocabulary”的元模式应该被认为需要这个词汇表，就好像它的URI的值为true一样。
+                </t>
+                <t>
+                    这个词汇表的当前URI(即内容词汇表)是:
+                    <eref target="https://json-schema.org/draft/2019-09/vocab/content"/>.
+                </t>
+                <t>
+                    对应的元模式的当前URI是:
+                    <eref target="https://json-schema.org/draft/2019-09/meta/content"/>.
+                </t>
+            </section>
+
+            <section title="实现需求">
+                <t>
+                    由于安全性和性能方面的考虑，以及可能的内容类型的开放性，实现在默认情况下不能自动解码、解析和/或验证字符串内容。
+                    这还支持嵌入式文档的用例，这些文档由不同的使用者处理，而不是由处理包含文档的使用者处理。
+                </t>
+                <t>
+                    本节中的所有关键字仅适用于字符串，对其他数据类型没有影响。
+                </t>
+                <t>
+                    实现可能提供自动解码、解析和/或验证字符串内容的能力。
+                    但是，在默认情况下，它不能执行这些操作，必须分别提供每个字符串编码的文档的验证结果。
+                    这个过程应该等价于根据原始模式完整地评估实例，然后使用注释来解码、解析和/或验证每个字符串编码的文档。
+                    <cref>
+                        目前，执行和返回解析数据和/或自动解码、解析和验证功能的验证结果的确切机制还没有指定。
+                        如果这样的功能被证明是流行的，它可能会在未来的草案中被更详细地说明。
+                    </cref>
+                </t>
+                <t>
+                    请参阅<xref target="security">安全注意事项</xref>小节，了解根据这些关键字自动处理实例字符串所引入的可能的漏洞。
+                </t>
+            </section>
+
+            <section title="contentEncoding">
+
+                <t>
+                    如果实例值是字符串，则此属性定义该字符串应被解释为二进制数据，并使用此属性命名的编码进行解码。
+                </t>
+
+                <t>
+                    在<xref target="RFC4648">RFC 4648</xref>中列出了表示以16、32和64为基底的编码的可能值，
+                    以及一些变体。此外，<xref target="RFC2045">RFC 2045</xref>的章节6.7和6.8提供了MIME中使用的编码。
+                    由于在两个RFC中都定义了“base64”，所以应该假定RFC 4648的定义为“base64”，除非该字符串是专门用于MIME上下文的。
+                    注意，所有这些编码的结果都是只包含7位ASCII字符的字符串。因此，对于包含该范围之外字符的字符串，此关键字没有任何意义。
+                </t>
+
+                <t>
+                    如果这个关键字不存在，但是“contentMediaType”存在，这表明编码是身份编码，
+                    这意味着不需要转换就可以在UTF-8字符串中表示内容。
+                </t>
+
+                <t>
+                    此属性的值必须是字符串。
+                </t>
+            </section>
+
+            <section title="contentMediaType">
+                <t>
+                   如果实例是字符串，则此属性指示字符串内容的媒体类型。如果存在“contentEncoding”，则此属性描述已解码的字符串。
+                </t>
+                <t>
+                    这个属性的值必须是一个字符串，它必须是一个媒体类型，由<xref target="RFC2046">RFC 2046</xref>定义。
+                </t>
+            </section>
+
+            <section title="contentSchema">
+                <t>
+                    如果实例是一个字符串，并且“contentMediaType”存在，则此属性包含一个描述字符串结构的模式。
+                </t>
+                <t>
+                    这个关键字可以与任何可以映射到JSON模式的数据模型的媒体类型一起使用。
+                </t>
+                <t>
+                    如果不存在“contentMediaType”，则应忽略此属性的值。
+                </t>
+            </section>
+
+            <section title="Example">
+                <figure>
+                    <preamble>
+                        下面是一个模式示例，演示了“contentEncoding”和“contentMediaType”的用法:
+                    </preamble>
+                    <artwork>
+<![CDATA[
+{
+    "type": "string",
+    "contentEncoding": "base64",
+    "contentMediaType": "image/png"
+}
+]]>
+                    </artwork>
+                    <postamble>
+                        这个模式描述的实例应该是字符串，它们的值应该可以解释为base64编码的PNG图像。
+                    </postamble>
+                </figure>
+
+                <figure>
+                    <preamble>
+                        另一个例子:
+                    </preamble>
+                    <artwork>
+<![CDATA[
+{
+    "type": "string",
+    "contentMediaType": "text/html"
+}
+]]>
+                    </artwork>
+                    <postamble>
+                        这个模式描述的实例应该是包含HTML的字符串，使用JSON字符串解码成的任何字符集。
+                        根据<xref target="RFC8259">RFC 8259</xref>，在一个完全封闭的系统之外，这必须是UTF-8。
+                    </postamble>
+                </figure>
+
+                <figure>
+                    <preamble>
+                        这个例子描述了一个JWT，它是使用HMAC SHA-256算法进行MACed的，并且在它的声明集中需要“iss”和“exp”字段。
+                    </preamble>
+                    <artwork>
+<![CDATA[
+{
+    "type": "string",
+    "contentMediaType": "application/jwt",
+    "contentSchema": {
+        "type": "array",
+        "minItems": 2,
+        "items": [
+            {
+                "const": {
+                    "typ": "JWT",
+                    "alg": "HS256"
+                }
+            },
+            {
+                "type": "object",
+                "required": ["iss", "exp"],
+                "properties": {
+                    "iss": {"type": "string"},
+                    "exp": {"type": "integer"}
+                }
+            }
+        ]
+    }
+}]]>
+                    </artwork>
+                    <postamble>
+                        注意“contentEncoding”没有出现。
+                        “application/jwt”媒体类型使用base64url编码，这是由媒体类型定义的，
+                        它决定了jwt字符串如何被解码成两个JSON数据结构的列表:首先是报头，然后是有效负载。
+                        由于JWT媒体类型确保JWT可以用JSON字符串表示，因此不需要进一步编码或解码。
+                    </postamble>
+                </figure>
+            </section>
+
+        </section>
+
+        <section title="基本元数据注释的词汇表">
+            <t>
+                这些通用注释关键字提供了用于文档和用户界面显示目的的常用信息。
+                它们不打算形成一套完整的特性。相反，可以为更复杂的基于注释的应用程序定义额外的词汇表。
+            </t>
+            <t>
+                不使用“$vocabulary”的元模式应该被认为需要这个词汇表，就好像它的URI的值为true一样。
+            </t>
+            <t>
+                这个词汇表的当前URI(称为元数据词汇表)是:
+                <eref target="https://json-schema.org/draft/2019-09/vocab/meta-data"/>.
+            </t>
+            <t>
+                对应的元模式的当前URI是:
+                <eref target="https://json-schema.org/draft/2019-09/meta/meta-data"/>.
+            </t>
+
+            <section title='"title" 和 "description"'>
+                <t>
+                    这两个关键字的值必须是字符串。
+                </t>
+                <t>
+                    这两个关键字都可用于用有关此用户界面生成的数据的信息来修饰用户界面。
+                    标题最好是简短的，而描述将提供关于此模式所描述的实例的用途的说明。
+                </t>
+            </section>
+
+            <section title='"default"'>
+                <t>
+                    这个关键字的值没有任何限制。当此关键字的多次出现适用于单个子实例时，实现应删除重复项。
+                </t>
+                <t>
+                    此关键字可用于提供与特定模式关联的默认JSON值。建议默认值对关联的模式有效。
+                </t>
+            </section>
+
+            <section title='"deprecated"'>
+                <t>
+                    此关键字的值必须为布尔值。当此关键字的多次出现适用于单个子实例时，
+                    如果出现指定真值，则应用程序应认为不推荐使用实例位置。
+                </t>
+                <t>
+                    如果“deprecated”的值为boolean true，则表示应用程序应该避免使用声明的属性。这可能意味着财产将在未来被移除。
+                </t>
+                <t>
+                    根模式包含“deprecated”，其值为true，表示将来可能会删除所描述的整个资源。
+                </t>
+                <t>
+                    当通过“items”将“deprecated”关键字应用于数组中的一个项时，如果“items”是单个模式，
+                    则deprecation与整个数组相关，
+                    而如果“items”是一个模式数组，则deprecation与对应项相关，具体取决于子模式的位置。
+                </t>
+                <t>
+                    省略此关键字的行为与false值相同。
+                </t>
+            </section>
+
+            <section title='"readOnly" and "writeOnly"'>
+                <t>
+                    这些关键字的值必须是布尔值。当这些关键字的多次出现适用于单个子实例时，
+                    如果出现指定真值，则产生的行为应该与真值相同，否则应该与假值相同。
+                </t>
+                <t>
+                    如果“readOnly”的值为boolean true，则表示实例的值由拥有该属性的权限独家管理，
+                    应用程序修改该属性值的尝试将被该权限忽略或拒绝。
+                </t>
+                <t>
+                    被标记为“整个文档只读”的实例文档在发送给拥有它的机构时可能被忽略，或者根据机构的判断可能导致错误。
+                </t>
+                <t>
+                    如果“writeOnly”的值为布尔值true，则表示当从拥有的权限检索实例时，该值不会出现。
+                    它可以在发送给拥有它的机构以更新或创建文档(或它所代表的资源)时出现，
+                    但是它不会包含在任何更新或新创建的实例版本中。
+                </t>
+                <t>
+                    对于整个文档被标记为“writeOnly”的实例文档，可以作为某种类型的空白文档返回，
+                    也可以在检索时产生错误，或者根据权威的判断忽略检索请求。
+                </t>
+                <t>
+                    例如，“readOnly”将用于将数据库生成的序列号标记为只读，而“writeOnly”将用于标记密码输入字段。
+                </t>
+                <t>
+                    这些关键字可用于辅助用户界面实例生成。特别是，应用程序可能选择使用一个小部件，该小部件在输入仅写字段时隐藏输入值。
+                </t>
+                <t>
+                    省略这些关键字的行为与false值相同。
+                </t>
+            </section>
+
+            <section title='"examples"'>
+                <t>
+                    这个关键字的值必须是一个数组。对于数组中的值没有任何限制。
+                    当此关键字的多次出现适用于单个子实例时，实现必须提供包含所有值的平面数组，而不是数组数组。
+                </t>
+                <t>
+                    此关键字可用于提供与特定模式关联的示例JSON值，以说明其用法。建议这些值对关联的模式有效。
+                </t>
+                <t>
+                    实现可以使用“default”的值(如果存在)作为另一个示例。如果没有“examples”，“default”仍然可以这样使用。
+                </t>
+            </section>
+        </section>
+
+        <section title="安全注意事项" anchor="security">
+            <t>
+                JSON模式验证为JSON模式核心定义了一个词汇表，并涉及其中列出的所有安全注意事项。
+            </t>
+            <t>
+                JSON模式验证允许使用正则表达式，正则表达式有许多不同的(通常不兼容的)实现。
+                有些实现允许嵌入任意代码，这超出了JSON模式的范围，必须禁止这样做。
+                正则表达式的计算成本通常非常高(使用所谓的“灾难性回溯”)，从而导致拒绝服务攻击。
+            </t>
+            <t>
+                支持基于“contentEncoding”和/或“contentMediaType”验证
+                或以其他方式评估实例字符串数据的实现面临着基于误导性信息以不安全的方式评估数据的风险。
+                应用程序可以通过仅在模式和实例之间建立了关系(例如，它们共享相同的权限)时执行此类处理来降低这种风险。
+            </t>
+            <t>
+                处理媒体类型或编码取决于该媒体类型或编码的安全性考虑。
+                例如，<xref target="RFC4329">RFC 4329脚本媒体类型</xref>
+                在处理JSON字符串中编码的JavaScript或ECMAScript时需要考虑安全性问题。
+            </t>
+        </section>
+
+        <!--
+        <section title="IANA Considerations">
+            <t>
+                This specification does not have any influence with regards to IANA.
+            </t>
+        </section>
+        -->
+    </middle>
+
+    <back>
+        <!-- References Section -->
+        <references title="Normative References">
+            &RFC2119;
+            &RFC1123;
+            &RFC2045;
+            &RFC2046;
+            &RFC2673;
+            &RFC3339;
+            &RFC3986;
+            &RFC3987;
+            &RFC4122;
+            &RFC4291;
+            &RFC4648;
+            &RFC5321;
+            &RFC5890;
+            &RFC5891;
+            &RFC6570;
+            &RFC6531;
+            &RFC6901;
+            &RFC8259;
+            <reference anchor="ecma262"
+            target="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf">
+                <front>
+                    <title>ECMA 262 specification</title>
+                    <author/>
+                    <date/>
+                </front>
+            </reference>
+            <reference anchor="relative-json-pointer">
+                <front>
+                    <title>Relative JSON Pointers</title>
+                    <author initials="G." surname="Luff">
+                        <organization/>
+                    </author>
+                    <author initials="H." surname="Andrews">
+                        <organization>Cloudflare, Inc.</organization>
+                    </author>
+                    <date year="2017" month="November"/>
+                </front>
+                <seriesInfo name="Internet-Draft" value="draft-handrews-relative-json-pointer-01" />
+            </reference>
+            <reference anchor="json-schema">
+                <front>
+                    <title>JSON Schema: A Media Type for Describing JSON Documents</title>
+                    <author initials="A." surname="Wright">
+                        <organization/>
+                    </author>
+                    <author initials="H." surname="Andrews">
+                        <organization/>
+                    </author>
+                    <date year="2017" month="November"/>
+                </front>
+                <seriesInfo name="Internet-Draft" value="draft-handrews-json-schema-02" />
+            </reference>
+        </references>
+
+        <references title="Informative References">
+            &RFC4329;
+        </references>
+
+        <section title="关键字从验证转移到核心">
+            <t>
+                从草案开始，几个关键字已经从这个文档移到了<xref target="json-schema">核心规范</xref>中，
+                在某些情况下需要重新命名或进行其他更改。这将影响以下前验证关键字:
+                <list style="hanging">
+                    <t hangText='"definitions"'>
+                        重命名为“$defs”，以匹配“$ref”，并更短的类型。
+                        模式词汇表的作者不应该定义具有不同行为的“定义”关键字，以避免使仍然使用旧名称的模式失效。
+                        虽然“definitions”在本文引用的单词汇元模式中不存在，
+                        但它仍然存在于默认的元模式中，并且实现应该假设“$defs”和“definitions”在使用该元模式时具有相同的行为。
+                    </t>
+                    <t hangText='"allOf", "anyOf", "oneOf", "not", "if", "then", "else",
+                                 "items", "additionalItems", "contains", "propertyNames",
+                                 "properties", "patternProperties", "additionalProperties"'>
+                        所有这些关键字都将子模式应用于实例并组合它们的结果，而不声明它们自己的任何条件。
+                        没有断言关键字，这些应用程序只能通过使用假布尔模式或通过反转真布尔模式(或等效模式对象)的结果来导致断言失败。
+                        因此，最好将它们定义为一种通用机制，验证、超模式和扩展词汇表都可以基于这种机制。
+                    </t>
+                    <t hangText='"dependencies"'>
+                        这个关键字有两种不同的行为模式，这使得它的实现和推理相对具有挑战性。
+                        作为applicator词汇表的一部分，模式表单已移动到Core并重命名为“dependentSchemas”。
+                        它类似于“属性”，只是它不将其子模式应用于属性值，而是将其应用于包含属性的对象。
+                        属性名数组表单保留在这里，并将其重命名为“dependentRequired”，因为它是一个断言，
+                        对于“required”断言关键字的条件使用来说，这是一个快捷方式。
+                    </t>
+                </list>
+            </t>
+        </section>
+
+        <section title="Acknowledgments">
+            <t>
+                Thanks to
+                Gary Court,
+                Francis Galiegue,
+                Kris Zyp,
+                and Geraint Luff
+                for their work on the initial drafts of JSON Schema.
+            </t>
+            <t>
+                Thanks to
+                Jason Desrosiers,
+                Daniel Perrett,
+                Erik Wilde,
+                Ben Hutton,
+                Evgeny Poberezkin,
+                Brad Bowman,
+                Gowry Sankar,
+                Donald Pipowitch,
+                Dave Finlay,
+                and Denis Laxalde
+                for their submissions and patches to the document.
+            </t>
+        </section>
+
+        <section title="ChangeLog">
+            <t>
+                <cref>This section to be removed before leaving Internet-Draft status.</cref>
+            </t>
+            <t>
+                <list style="hanging">
+                    <t hangText="draft-handrews-json-schema-validation-03">
+                        <list style="symbols">
+                            <t>Correct email format RFC reference to 5321 instead of 5322</t>
+                            <t>Clarified the set and meaning of "contentEncoding" values</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-handrews-json-schema-validation-02">
+                        <list style="symbols">
+                            <t>Grouped keywords into formal vocabuarlies</t>
+                            <t>Update "format" implementation requirements in terms of vocabularies</t>
+                            <t>By default, "format" MUST NOT be validated, although validation can be enabled</t>
+                            <t>A vocabulary declaration can be used to require "format" validation</t>
+                            <t>Moved "definitions" to the core spec as "$defs"</t>
+                            <t>Moved applicator keywords to the core spec</t>
+                            <t>Renamed the array form of "dependencies" to "dependentRequired", moved the schema form to the core spec</t>
+                            <t>Specified all "content*" keywords as annotations, not assertions</t>
+                            <t>Added "contentSchema" to allow applying a schema to a string-encoded document</t>
+                            <t>Also allow RFC 4648 encodings in "contentEncoding"</t>
+                            <t>Added "minContains" and "maxContains"</t>
+                            <t>Update RFC reference for "hostname" and "idn-hostname"</t>
+                            <t>Add "uuid" and "duration" formats</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-handrews-json-schema-validation-01">
+                        <list style="symbols">
+                            <t>This draft is purely a clarification with no functional changes</t>
+                            <t>Provided the general principle behind ignoring annotations under "not" and similar cases</t>
+                            <t>Clarified "if"/"then"/"else" validation interactions</t>
+                            <t>Clarified "if"/"then"/"else" behavior for annotation</t>
+                            <t>Minor formatting and cross-referencing improvements</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-handrews-json-schema-validation-00">
+                        <list style="symbols">
+                            <t>Added "if"/"then"/"else"</t>
+                            <t>Classify keywords as assertions or annotations per the core spec</t>
+                            <t>Warn of possibly removing "dependencies" in the future</t>
+                            <t>Grouped validation keywords into sub-sections for readability</t>
+                            <t>Moved "readOnly" from hyper-schema to validation meta-data</t>
+                            <t>Added "writeOnly"</t>
+                            <t>Added string-encoded media section, with former hyper-schema "media" keywords</t>
+                            <t>Restored "regex" format (removal was unintentional)</t>
+                            <t>Added "date" and "time" formats, and reserved additional RFC 3339 format names</t>
+                            <t>I18N formats: "iri", "iri-reference", "idn-hostname", "idn-email"</t>
+                            <t>Clarify that "json-pointer" format means string encoding, not URI fragment</t>
+                            <t>Fixed typo that inverted the meaning of "minimum" and "exclusiveMinimum"</t>
+                            <t>Move format syntax references into Normative References</t>
+                            <t>JSON is a normative requirement</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-wright-json-schema-validation-01">
+                        <list style="symbols">
+                            <t>Standardized on hyphenated format names with full words ("uriref" becomes "uri-reference")</t>
+                            <t>Add the formats "uri-template" and "json-pointer"</t>
+                            <t>Changed "exclusiveMaximum"/"exclusiveMinimum" from boolean modifiers of "maximum"/"minimum" to independent numeric fields.</t>
+                            <t>Split the additionalItems/items into two sections</t>
+                            <t>Reworked properties/patternProperties/additionalProperties definition</t>
+                            <t>Added "examples" keyword</t>
+                            <t>Added "contains" keyword</t>
+                            <t>Allow empty "required" and "dependencies" arrays</t>
+                            <t>Fixed "type" reference to primitive types</t>
+                            <t>Added "const" keyword</t>
+                            <t>Added "propertyNames" keyword</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-wright-json-schema-validation-00">
+                        <list style="symbols">
+                            <t>Added additional security considerations</t>
+                            <t>Removed reference to "latest version" meta-schema, use numbered version instead</t>
+                            <t>Rephrased many keyword definitions for brevity</t>
+                            <t>Added "uriref" format that also allows relative URI references</t>
+                        </list>
+                    </t>
+                    <t hangText="draft-fge-json-schema-validation-00">
+                        <list style="symbols">
+                            <t>Initial draft.</t>
+                            <t>Salvaged from draft v3.</t>
+                            <t>Redefine the "required" keyword.</t>
+                            <t>Remove "extends", "disallow"</t>
+                            <t>Add "anyOf", "allOf", "oneOf", "not", "definitions", "minProperties",
+                            "maxProperties".</t>
+                            <t>"dependencies" member values can no longer be single strings; at
+                            least one element is required in a property dependency array.</t>
+                            <t>Rename "divisibleBy" to "multipleOf".</t>
+                            <t>"type" arrays can no longer have schemas; remove "any" as a possible
+                            value.</t>
+                            <t>Rework the "format" section; make support optional.</t>
+                            <t>"format": remove attributes "phone", "style", "color"; rename
+                            "ip-address" to "ipv4"; add references for all attributes.</t>
+                            <t>Provide algorithms to calculate schema(s) for array/object
+                            instances.</t>
+                            <t>Add interoperability considerations.</t>
+                        </list>
+                    </t>
+                </list>
+            </t>
+        </section>
+    </back>
+</rfc>
